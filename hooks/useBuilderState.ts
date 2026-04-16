@@ -47,11 +47,11 @@ export function useBuilderState() {
 
   const addComponent = useCallback(
     (id: string) =>
-      update((prev) =>
-        prev.selectedComponentIds.includes(id)
-          ? prev
-          : { ...prev, selectedComponentIds: [...prev.selectedComponentIds, id], lastUpdated: Date.now() }
-      ),
+      update((prev) => {
+        const alreadyAdded = prev.selectedComponentIds.some((cId) => (cId.includes(":") ? cId.split(":")[0] : cId) === id);
+        if (alreadyAdded) return prev;
+        return { ...prev, selectedComponentIds: [...prev.selectedComponentIds, id], lastUpdated: Date.now() };
+      }),
     [update]
   );
 

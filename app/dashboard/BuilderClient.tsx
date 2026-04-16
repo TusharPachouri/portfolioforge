@@ -8,7 +8,6 @@ import { demoData } from "@/lib/demo-data";
 import { PortfolioData } from "@/types/portfolio";
 import { saveSelectedComponents, importLocalStorageData, importComponentIds } from "@/lib/actions/portfolio";
 import { useBuilderState } from "@/hooks/useBuilderState";
-import ComponentCard from "@/components/library/ComponentCard";
 import FilterTabs, { FilterTab } from "@/components/library/FilterTabs";
 import SearchBar from "@/components/library/SearchBar";
 import { getThemeTokenStyle } from "@/lib/themes";
@@ -42,21 +41,22 @@ interface Props {
 
 function SortableRow({ id, onRemove }: { id: string; onRemove: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const entry = getComponentById(id);
+  const baseId = id.includes(":") ? id.split(":")[0] : id;
+  const entry = getComponentById(baseId);
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex items-center gap-2 bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm",
+        "flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm",
         isDragging && "opacity-50 shadow-lg z-50"
       )}
     >
-      <button {...attributes} {...listeners} className="text-zinc-300 hover:text-zinc-500 cursor-grab active:cursor-grabbing">
+      <button {...attributes} {...listeners} className="text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 cursor-grab active:cursor-grabbing">
         <GripVertical className="h-4 w-4" />
       </button>
-      <span className="flex-1 text-zinc-700">{entry?.name ?? id}</span>
-      <button onClick={onRemove} className="text-zinc-300 hover:text-red-400 cursor-pointer">
+      <span className="flex-1 text-zinc-700 dark:text-zinc-200">{entry?.name ?? id}</span>
+      <button onClick={onRemove} className="text-zinc-300 dark:text-zinc-600 hover:text-red-400 cursor-pointer">
         <X className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -161,8 +161,16 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
   };
 
   const addComponent = (id: string) => {
-    if (componentIds.includes(id)) return;
+    const alreadyAdded = componentIds.some((cId) => (cId.includes(":") ? cId.split(":")[0] : cId) === id);
+    if (alreadyAdded) return;
     const entry = getComponentById(id);
+    if (entry?.category === "section") {
+      const subcategoryTaken = componentIds.some((cId) => {
+        const baseId = cId.includes(":") ? cId.split(":")[0] : cId;
+        return getComponentById(baseId)?.subcategory === entry.subcategory;
+      });
+      if (subcategoryTaken) return;
+    }
     if (entry && !canUseComponent(entry, userRole)) {
       setUpgradeModal({ open: true, trigger: "component" });
       return;
@@ -239,8 +247,8 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
 
       {/* Free tier banner */}
       {!proUser && (
-        <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border-b border-violet-100 px-4 py-2 flex items-center justify-between">
-          <p className="text-xs text-violet-700">
+        <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/40 dark:to-indigo-950/40 border-b border-violet-100 dark:border-violet-900/50 px-4 py-2 flex items-center justify-between">
+          <p className="text-xs text-violet-700 dark:text-violet-300">
             <span className="font-semibold">Free plan</span> — {componentIds.length}/{8} components used · Upgrade for unlimited access
           </p>
           <a href="/dashboard/upgrade"
@@ -252,9 +260,9 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
 
       <div className="flex flex-1 overflow-hidden">
       {/* Left panel — component list */}
-      <div className="w-72 shrink-0 border-r border-zinc-100 bg-white flex flex-col">
-        <div className="p-4 border-b border-zinc-100">
-          <h2 className="font-semibold text-zinc-900 text-sm mb-0.5">My Components</h2>
+      <div className="w-72 shrink-0 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col">
+        <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+          <h2 className="font-semibold text-zinc-900 dark:text-white text-sm mb-0.5">My Components</h2>
           <p className="text-xs text-zinc-400">{componentIds.length} section{componentIds.length !== 1 ? "s" : ""} · drag to reorder</p>
         </div>
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -273,10 +281,10 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
             </DndContext>
           )}
         </div>
-        <div className="p-3 border-t border-zinc-100">
+        <div className="p-3 border-t border-zinc-100 dark:border-zinc-800">
           <button
             onClick={() => setShowLibrary(true)}
-            className="w-full flex items-center justify-center gap-2 border border-dashed border-zinc-300 text-zinc-600 py-2.5 rounded-xl text-sm hover:border-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 py-2.5 rounded-xl text-sm hover:border-zinc-500 dark:hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer"
           >
             <Plus className="h-4 w-4" /> Add Components
           </button>
@@ -284,7 +292,7 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
       </div>
 
       {/* Center — live preview */}
-      <div className="flex-1 overflow-auto bg-zinc-50">
+      <div className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950">
         <div className="p-4">
           {/* Status bar */}
           <div className="flex items-center justify-between mb-4">
@@ -295,7 +303,7 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
             </div>
             {!hasDetails && (
               <a href="/dashboard/details"
-                className="inline-flex items-center gap-1.5 text-xs text-violet-600 border border-violet-200 bg-violet-50 px-2.5 py-1 rounded-lg hover:bg-violet-100 transition-colors">
+                className="inline-flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/50 px-2.5 py-1 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors">
                 <Sparkles className="h-3 w-3" /> Fill in your details to personalize →
               </a>
             )}
@@ -304,11 +312,11 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
           {/* Portfolio preview */}
           {componentIds.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-40 text-center">
-              <div className="h-16 w-16 bg-zinc-100 rounded-2xl flex items-center justify-center mb-4">
+              <div className="h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-4">
                 <Sparkles className="h-7 w-7 text-zinc-400" />
               </div>
-              <h3 className="font-semibold text-zinc-900 mb-1">Start building your portfolio</h3>
-              <p className="text-sm text-zinc-500 mb-4">Add sections from the library to preview them here</p>
+              <h3 className="font-semibold text-zinc-900 dark:text-white mb-1">Start building your portfolio</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Add sections from the library to preview them here</p>
               <button onClick={() => setShowLibrary(true)}
                 className="inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 cursor-pointer">
                 <Plus className="h-4 w-4" /> Browse Library
@@ -334,7 +342,7 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
 
             return (
               <div
-                className="pf-themed border border-zinc-200 rounded-2xl overflow-hidden shadow-sm"
+                className="pf-themed border border-zinc-200 dark:border-zinc-700 rounded-2xl overflow-hidden shadow-sm"
                 style={{
                   ...(themeTokens as React.CSSProperties),
                   background: rootBg,
@@ -357,7 +365,8 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
                 )}
                 <div style={{ position: "relative", zIndex: 1 }}>
                   {componentIds.map((id) => {
-                    const Component = componentMap[id];
+                    const baseId = id.includes(":") ? id.split(":")[0] : id;
+                    const Component = componentMap[baseId];
                     return Component ? <Component key={id} data={portfolioData} /> : null;
                   })}
                 </div>
@@ -371,14 +380,14 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
       {showLibrary && (
         <div className="fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/30" onClick={() => setShowLibrary(false)} />
-          <div className="relative ml-auto w-[480px] max-w-full bg-white shadow-xl flex flex-col h-full">
-            <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-              <h2 className="font-semibold text-zinc-900">Component Library</h2>
-              <button onClick={() => setShowLibrary(false)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
+          <div className="relative ml-auto w-[480px] max-w-full bg-white dark:bg-zinc-900 shadow-xl flex flex-col h-full">
+            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <h2 className="font-semibold text-zinc-900 dark:text-white">Component Library</h2>
+              <button onClick={() => setShowLibrary(false)} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-3 border-b border-zinc-100 space-y-2">
+            <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 space-y-2">
               <SearchBar value={search} onChange={setSearch} />
               <FilterTabs active={filter} onChange={setFilter} />
             </div>
@@ -386,34 +395,82 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
               <div className="grid grid-cols-2 gap-3">
                 {filteredRegistry.map((comp) => {
                   const isLocked = !canUseComponent(comp, userRole);
-                  const isAdded = componentIds.includes(comp.id);
+                  const isAdded = componentIds.some((cId) => (cId.includes(":") ? cId.split(":")[0] : cId) === comp.id);
+                  const isSubcategoryUsed = !isAdded && comp.category === "section" && componentIds.some((cId) => {
+                    const baseId = cId.includes(":") ? cId.split(":")[0] : cId;
+                    return getComponentById(baseId)?.subcategory === comp.subcategory;
+                  });
+                  const gradients: Record<string, string> = {
+                    Hero: "from-violet-100 to-indigo-100",
+                    About: "from-blue-50 to-cyan-100",
+                    Skills: "from-emerald-50 to-teal-100",
+                    Projects: "from-orange-50 to-amber-100",
+                    Experience: "from-pink-50 to-rose-100",
+                    Education: "from-sky-50 to-blue-100",
+                    Contact: "from-purple-50 to-fuchsia-100",
+                    Footer: "from-zinc-50 to-zinc-100",
+                    Stats: "from-green-50 to-emerald-100",
+                    Testimonials: "from-yellow-50 to-amber-100",
+                    Gallery: "from-red-50 to-pink-100",
+                  };
+                  const gradient = gradients[comp.subcategory as string] ?? "from-zinc-50 to-zinc-100";
                   return (
-                    <div key={comp.id} className="relative">
-                      <ComponentCard component={comp} />
-                      {!isAdded && (
-                        <button
-                          onClick={() => addComponent(comp.id)}
-                          className={`absolute inset-0 opacity-0 hover:opacity-100 text-white text-xs font-medium rounded-xl flex items-center justify-center gap-1 transition-opacity cursor-pointer ${
-                            isLocked ? "bg-violet-900/80" : "bg-zinc-900/80"
-                          }`}
-                        >
-                          {isLocked ? (
-                            <><Zap className="h-3.5 w-3.5" /> Pro</>
-                          ) : (
-                            <><Plus className="h-3.5 w-3.5" /> Add</>
-                          )}
-                        </button>
-                      )}
-                      {isAdded && (
-                        <div className="absolute top-2 left-2 bg-emerald-500 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> Added
-                        </div>
-                      )}
-                      {isLocked && !isAdded && (
-                        <div className="absolute top-2 right-2 bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                          PRO
-                        </div>
-                      )}
+                    <div key={comp.id} className={cn(
+                      "border rounded-xl overflow-hidden transition-all flex flex-col",
+                      isAdded || isSubcategoryUsed ? "bg-zinc-50 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700" : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700"
+                    )}>
+                      {/* Thumbnail */}
+                      <div className={`relative h-28 bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0 ${isAdded || isSubcategoryUsed ? "opacity-50" : ""}`}>
+                        <span className="text-4xl font-black text-zinc-300 select-none">{(comp.subcategory as string)[0]}</span>
+                        {comp.tier === "pro" && (
+                          <div className="absolute top-2 right-2 bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</div>
+                        )}
+                        {isAdded && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-emerald-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Added
+                            </div>
+                          </div>
+                        )}
+                        {isSubcategoryUsed && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-amber-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
+                              Type used
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Card footer */}
+                      <div className="p-2.5 flex items-center gap-2 flex-1">
+                        <span className="flex-1 text-xs font-medium text-zinc-700 dark:text-zinc-200 truncate">{comp.name}</span>
+                        {isAdded ? (
+                          <button
+                            onClick={() => removeComponent(componentIds.find((cId) => (cId.includes(":") ? cId.split(":")[0] : cId) === comp.id)!)}
+                            className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors cursor-pointer"
+                          >
+                            <X className="h-3 w-3" /> Remove
+                          </button>
+                        ) : isSubcategoryUsed ? (
+                          <span className="flex-shrink-0 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 cursor-not-allowed">
+                            Type used
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => addComponent(comp.id)}
+                            className={cn(
+                              "flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer",
+                              isLocked
+                                ? "bg-violet-100 text-violet-700 hover:bg-violet-200"
+                                : "bg-zinc-900 text-white hover:bg-zinc-700"
+                            )}
+                          >
+                            {isLocked
+                              ? <><Zap className="h-3 w-3" /> Pro</>
+                              : <><Plus className="h-3 w-3" /> Add</>
+                            }
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

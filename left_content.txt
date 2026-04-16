@@ -1,0 +1,30 @@
+
+<div className="z-10 text-center lg:text-left">
+<div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-xs font-bold mb-6 tracking-wide uppercase">
+<span className="material-symbols-outlined text-[14px]" data-icon="auto_awesome">auto_awesome</span>
+                        Next-Gen Portfolio Builder
+                    </div>
+<h1 className="text-5xl md:text-7xl font-extrabold font-headline text-primary tracking-tight leading-[1.1] mb-6">
+                        Build a stunning portfolio in minutes
+                    </h1>
+<p className="text-on-surface-variant text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
+                        Experience the weightless design of The Ethereal Architect. Curate your professional story using precision-crafted components designed for the modern web.
+                    </p>
+<div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+<button className="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold text-lg hover:bg-secondary transition-all w-full sm:w-auto shadow-lg">
+                            Browse Components
+                        </button>
+<button className="bg-surface-container-lowest/40 backdrop-blur-md text-primary px-8 py-4 rounded-xl font-bold text-lg border border-outline-variant/20 hover:bg-surface-container-lowest/60 transition-all w-full sm:w-auto">
+                            See a Demo
+                        </button>
+</div>
+
+<div className="mt-12 flex flex-wrap justify-center lg:justify-start items-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+<span className="font-bold text-sm tracking-widest uppercase">Trusted By</span>
+<div className="flex gap-8">
+<span className="material-symbols-outlined" data-icon="pentagon">pentagon</span>
+<span className="material-symbols-outlined" data-icon="deployed_code">deployed_code</span>
+<span className="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+</div>
+</div>
+</div>

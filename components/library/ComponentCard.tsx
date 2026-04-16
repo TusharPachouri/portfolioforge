@@ -35,7 +35,7 @@ const GRADIENTS: Record<string, string> = {
 
 export default function ComponentCard({ component }: Props) {
   const { state, addComponent, removeComponent } = useBuilderState();
-  const isAdded = state.selectedComponentIds.includes(component.id);
+  const isAdded = state.selectedComponentIds.some((id) => (id.includes(":") ? id.split(":")[0] : id) === component.id);
   const gradient = GRADIENTS[component.subcategory] ?? "from-zinc-50 to-zinc-100";
 
   return (

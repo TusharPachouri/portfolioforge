@@ -7,7 +7,7 @@ import { Portfolio } from "@/lib/db/schema";
 import { signOut } from "next-auth/react";
 import {
   Layers, Settings, ExternalLink, Globe, ToggleLeft, ToggleRight,
-  LogOut, Sparkles, Palette, LayoutGrid, Zap, BarChart2
+  LogOut, Sparkles, Palette, LayoutGrid, Zap, BarChart2, Moon, Sun
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useTransition } from "react";
@@ -32,6 +32,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
   const pathname = usePathname();
   const [published, setPublished] = useState(portfolio?.published ?? false);
   const [isPending, startTransition] = useTransition();
+  const [darkMode, setDarkMode] = useState(false);
 
   const togglePublish = () => {
     const next = !published;
@@ -48,13 +49,13 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
   const publicUrl = portfolio ? `/u/${portfolio.slug}` : null;
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
+    <div className={cn("min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col", darkMode && "dark")}>
       {/* Top bar */}
-      <header className="sticky top-0 z-40 bg-white border-b border-zinc-100 shadow-sm">
+      <header className="sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 shadow-sm">
         <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 text-sm shrink-0">
-            <div className="h-7 w-7 rounded-lg bg-zinc-900 flex items-center justify-center">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-white text-sm shrink-0">
+            <div className="h-7 w-7 rounded-lg bg-zinc-900 dark:bg-zinc-700 flex items-center justify-center">
               <span className="text-white text-xs font-bold">PF</span>
             </div>
             <span className="hidden sm:inline">PortfolioForge</span>
@@ -63,18 +64,27 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
           {/* Public URL */}
           <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
             {publicUrl && (
-              <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 max-w-xs w-full">
+              <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 max-w-xs w-full">
                 <Globe className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                <span className="text-xs text-zinc-500 truncate">portfolioforge.dev{publicUrl}</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">portfolioforge.dev{publicUrl}</span>
                 <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="ml-auto shrink-0">
-                  <ExternalLink className="h-3.5 w-3.5 text-zinc-400 hover:text-zinc-700" />
+                  <ExternalLink className="h-3.5 w-3.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200" />
                 </a>
               </div>
             )}
           </div>
 
-          {/* Right: publish toggle + user */}
+          {/* Right: dark toggle + publish toggle + user */}
           <div className="flex items-center gap-3 shrink-0">
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode((d) => !d)}
+              className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
             <button
               onClick={togglePublish}
               disabled={isPending}
@@ -82,7 +92,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
                 "inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all cursor-pointer",
                 published
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                  : "border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                  : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
               )}
             >
               {published
@@ -97,7 +107,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
               )}
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="text-zinc-400 hover:text-zinc-700 transition-colors cursor-pointer"
+                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer"
                 title="Sign out"
               >
                 <LogOut className="h-4 w-4" />
@@ -109,7 +119,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
 
       <div className="flex flex-1 max-w-screen-xl mx-auto w-full">
         {/* Sidebar nav */}
-        <aside className="w-52 shrink-0 border-r border-zinc-100 bg-white py-4 px-2 min-h-full">
+        <aside className="w-52 shrink-0 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-4 px-2 min-h-full">
           <nav className="space-y-0.5">
             {NAV.map(({ href, label, icon: Icon, proOnly }) => {
               const isPro = session.user.role === "pro" || session.user.role === "admin";
@@ -119,8 +129,8 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
                   className={cn(
                     "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                     pathname === href
-                      ? "bg-zinc-900 text-white"
-                      : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"
+                      ? "bg-zinc-900 dark:bg-zinc-700 text-white"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800"
                   )}>
                   <Icon className="h-4 w-4" />
                   {label}

@@ -126,7 +126,8 @@ export default async function PublicPortfolioPage({ params }: Props) {
       {/* Content sits above the pattern overlay */}
       <div style={{ position: "relative", zIndex: 1 }}>
         {ids.map((id) => {
-          const Component = componentMap[id];
+          const baseId = id.includes(":") ? id.split(":")[0] : id;
+          const Component = componentMap[baseId];
           return Component ? <Component key={id} data={data} /> : null;
         })}
 
