@@ -6,7 +6,8 @@ import { registry } from "@/lib/components/registry";
 import { componentMap } from "@/lib/components/map";
 import { demoData } from "@/lib/demo-data";
 import { PortfolioData } from "@/types/portfolio";
-import { saveSelectedComponents, importLocalStorageData, importComponentIds } from "@/lib/actions/portfolio";
+import { saveSelectedComponents, importLocalStorageData, importComponentIds, saveTheme, savePattern } from "@/lib/actions/portfolio";
+import { generateRandomLayout, generateRandomStyle } from "@/lib/random-theme";
 import { useBuilderState } from "@/hooks/useBuilderState";
 import FilterTabs, { FilterTab } from "@/components/library/FilterTabs";
 import SearchBar from "@/components/library/SearchBar";
@@ -17,14 +18,14 @@ import { cn } from "@/lib/utils";
 import { canUseComponent, canAddMoreComponents, isPro } from "@/lib/gate";
 import UpgradeModal from "@/components/UpgradeModal";
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent
 } from "@dnd-kit/core";
 import {
-  SortableContext, verticalListSortingStrategy, useSortable, arrayMove
+  SortableContext, verticalListSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  GripVertical, X, Plus, Sparkles, Loader2, CheckCircle2, AlertCircle, Zap
+  GripVertical, X, Plus, Sparkles, Loader2, CheckCircle2, AlertCircle, Zap, Dices, Undo2
 } from "lucide-react";
 import { getComponentById } from "@/lib/components/registry";
 
@@ -43,21 +44,31 @@ function SortableRow({ id, onRemove }: { id: string; onRemove: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const baseId = id.includes(":") ? id.split(":")[0] : id;
   const entry = getComponentById(baseId);
+  const name = entry?.name ?? id;
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm",
-        isDragging && "opacity-50 shadow-lg z-50"
+        "group flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-2.5 py-2 text-sm transition-shadow hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-600",
+        isDragging && "opacity-60 shadow-lg z-50 ring-2 ring-violet-200 dark:ring-violet-900"
       )}
     >
-      <button {...attributes} {...listeners} className="text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 cursor-grab active:cursor-grabbing">
-        <GripVertical className="h-4 w-4" />
+      <button
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder ${name}`}
+        className="flex h-8 w-7 items-center justify-center rounded-md text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-violet-500"
+      >
+        <GripVertical className="h-4 w-4" aria-hidden="true" />
       </button>
-      <span className="flex-1 text-zinc-700 dark:text-zinc-200">{entry?.name ?? id}</span>
-      <button onClick={onRemove} className="text-zinc-300 dark:text-zinc-600 hover:text-red-400 cursor-pointer">
-        <X className="h-3.5 w-3.5" />
+      <span className="flex-1 truncate text-zinc-700 dark:text-zinc-200 font-medium">{name}</span>
+      <button
+        onClick={onRemove}
+        aria-label={`Remove ${name}`}
+        className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
     </div>
   );
@@ -138,10 +149,46 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
     portfolio?.selectedComponentIds ?? []
   );
 
+  // Theme + pattern — local state so the preview updates instantly when randomized
+  const [themeId, setThemeId] = useState<string>(portfolio?.themeId ?? "minimalist");
+  const [activePattern, setActivePattern] = useState<{ id: string | null; config: PatternConfig | null }>({
+    id: portfolio?.patternId ?? null,
+    config: (portfolio?.patternConfig as PatternConfig | null) ?? null,
+  });
+
+  // "Surprise me" undo snapshot + dice animation state
+  interface Snapshot {
+    ids: string[];
+    themeId: string;
+    pattern: { id: string | null; config: PatternConfig | null };
+    label: string;
+  }
+  const [undoSnap, setUndoSnap] = useState<Snapshot | null>(null);
+  const [rolling, setRolling] = useState(false);
+
+  useEffect(() => {
+    if (!undoSnap) return;
+    const t = setTimeout(() => setUndoSnap(null), 10000);
+    return () => clearTimeout(t);
+  }, [undoSnap]);
+
   // Preview data
   const portfolioData = (portfolio?.portfolioData as PortfolioData | null) ?? demoData;
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Close the library drawer with Escape
+  useEffect(() => {
+    if (!showLibrary) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowLibrary(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showLibrary]);
 
   const save = useCallback((ids: string[]) => {
     startTransition(async () => {
@@ -190,6 +237,41 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
     save(next);
   };
 
+  // ── Random theme generator ──
+  const surpriseMe = () => {
+    // Snapshot current state so the change is one click away from undone
+    setUndoSnap({ ids: componentIds, themeId, pattern: activePattern, label: "previous setup" });
+
+    const ids = generateRandomLayout(userRole);
+    const style = generateRandomStyle(userRole);
+
+    setComponentIds(ids);
+    setThemeId(style.themeId);
+    setActivePattern({ id: style.patternId, config: style.patternConfig });
+    setRolling(true);
+    setTimeout(() => setRolling(false), 700);
+
+    startTransition(async () => {
+      await saveSelectedComponents(ids);
+      await saveTheme(style.themeId);
+      await savePattern(style.patternId, style.patternConfig);
+    });
+  };
+
+  const undoSurprise = () => {
+    if (!undoSnap) return;
+    const snap = undoSnap;
+    setUndoSnap(null);
+    setComponentIds(snap.ids);
+    setThemeId(snap.themeId);
+    setActivePattern(snap.pattern);
+    startTransition(async () => {
+      await saveSelectedComponents(snap.ids);
+      await saveTheme(snap.themeId);
+      await savePattern(snap.pattern.id, snap.pattern.config);
+    });
+  };
+
   const handleImport = () => {
     const hasComponents = state.selectedComponentIds.length > 0;
     if (!state.rawFormData && !hasComponents) { setShowImport(false); return; }
@@ -234,60 +316,113 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
 
   return (
     <div className="flex h-full flex-col">
-      {/* Upgrade success toast */}
-      {showUpgradeToast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-medium animate-in slide-in-from-bottom-2">
-          <CheckCircle2 className="h-5 w-5 shrink-0" />
-          <span>You&apos;re now Pro! All features unlocked.</span>
-          <button onClick={() => setShowUpgradeToast(false)} className="ml-2 text-emerald-200 hover:text-white cursor-pointer">
-            <X className="h-4 w-4" />
+      {/* Random theme undo toast */}
+      {undoSnap && (
+        <div role="status" className="toast-in fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-zinc-900 text-white pl-4 pr-1.5 py-2 rounded-2xl shadow-xl text-sm">
+          <Dices className="h-4 w-4 text-violet-400 shrink-0" aria-hidden="true" />
+          <span className="whitespace-nowrap">Random theme applied</span>
+          <button
+            onClick={undoSurprise}
+            className="inline-flex items-center gap-1.5 font-semibold text-violet-300 hover:text-white px-2.5 py-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <Undo2 className="h-3.5 w-3.5" aria-hidden="true" /> Undo
+          </button>
+          <button
+            onClick={() => setUndoSnap(null)}
+            aria-label="Dismiss notification"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </div>
       )}
 
-      {/* Free tier banner */}
+      {/* Upgrade success toast */}
+      {showUpgradeToast && (
+        <div role="status" className="toast-in fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-medium">
+          <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span>You&apos;re now Pro! All features unlocked.</span>
+          <button onClick={() => setShowUpgradeToast(false)} aria-label="Dismiss notification" className="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-emerald-200 hover:text-white hover:bg-emerald-700 transition-colors cursor-pointer">
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      {/* Free tier banner with slot meter */}
       {!proUser && (
-        <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/40 dark:to-indigo-950/40 border-b border-violet-100 dark:border-violet-900/50 px-4 py-2 flex items-center justify-between">
-          <p className="text-xs text-violet-700 dark:text-violet-300">
-            <span className="font-semibold">Free plan</span> — {componentIds.length}/{8} components used · Upgrade for unlimited access
-          </p>
+        <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/40 dark:to-indigo-950/40 border-b border-violet-100 dark:border-violet-900/50 px-4 py-2 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <p className="text-xs text-violet-700 dark:text-violet-300 truncate">
+              <span className="font-semibold">Free plan</span> — {componentIds.length}/8 components used
+            </p>
+            <div
+              className="hidden sm:block h-1.5 w-24 rounded-full bg-violet-100 dark:bg-violet-900/60 overflow-hidden"
+              role="progressbar"
+              aria-valuenow={componentIds.length}
+              aria-valuemin={0}
+              aria-valuemax={8}
+              aria-label="Component slots used"
+            >
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-500"
+                style={{ width: `${Math.min((componentIds.length / 8) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
           <a href="/dashboard/upgrade"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:bg-violet-700 transition-colors">
-            <Zap className="h-3 w-3" /> Upgrade to Pro
+            className="press-scale shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:bg-violet-700 transition-colors">
+            <Zap className="h-3 w-3" aria-hidden="true" /> Upgrade to Pro
           </a>
         </div>
       )}
 
       <div className="flex flex-1 overflow-hidden">
       {/* Left panel — component list */}
-      <div className="w-72 shrink-0 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col">
-        <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
-          <h2 className="font-semibold text-zinc-900 dark:text-white text-sm mb-0.5">My Components</h2>
-          <p className="text-xs text-zinc-400">{componentIds.length} section{componentIds.length !== 1 ? "s" : ""} · drag to reorder</p>
+      <div className="w-64 md:w-72 shrink-0 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col">
+        <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="font-semibold text-zinc-900 dark:text-white text-sm mb-0.5">My Components</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+              {componentIds.length} section{componentIds.length !== 1 ? "s" : ""}{componentIds.length > 1 ? " · drag to reorder" : ""}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowLibrary(true)}
+            className="press-scale shrink-0 inline-flex items-center gap-1.5 bg-zinc-900 dark:bg-zinc-700 text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Add
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {componentIds.length === 0 ? (
-            <div className="text-center py-10 text-zinc-400">
-              <p className="text-sm">No sections yet.</p>
-              <p className="text-xs mt-1">Click + Add to browse the library</p>
-            </div>
+            <button
+              onClick={() => setShowLibrary(true)}
+              className="w-full flex flex-col items-center gap-2 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl py-10 px-4 text-center hover:border-violet-300 dark:hover:border-violet-700 hover:bg-violet-50/40 dark:hover:bg-violet-950/20 transition-colors cursor-pointer group"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-400 group-hover:bg-violet-100 group-hover:text-violet-600 dark:group-hover:bg-violet-900/50 transition-colors">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Add your first section</span>
+              <span className="text-xs text-zinc-400">Browse the component library</span>
+            </button>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={componentIds} strategy={verticalListSortingStrategy}>
-                {componentIds.map((id) => (
-                  <SortableRow key={id} id={id} onRemove={() => removeComponent(id)} />
-                ))}
-              </SortableContext>
-            </DndContext>
+            <>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={componentIds} strategy={verticalListSortingStrategy}>
+                  {componentIds.map((id) => (
+                    <SortableRow key={id} id={id} onRemove={() => removeComponent(id)} />
+                  ))}
+                </SortableContext>
+              </DndContext>
+              {/* Flowing add tile — sits right after the last section */}
+              <button
+                onClick={() => setShowLibrary(true)}
+                className="w-full flex items-center justify-center gap-2 border border-dashed border-zinc-200 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 py-2.5 rounded-xl text-sm hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50/40 dark:hover:bg-violet-950/20 transition-colors cursor-pointer"
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" /> Add section
+              </button>
+            </>
           )}
-        </div>
-        <div className="p-3 border-t border-zinc-100 dark:border-zinc-800">
-          <button
-            onClick={() => setShowLibrary(true)}
-            className="w-full flex items-center justify-center gap-2 border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 py-2.5 rounded-xl text-sm hover:border-zinc-500 dark:hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-          >
-            <Plus className="h-4 w-4" /> Add Components
-          </button>
         </div>
       </div>
 
@@ -295,44 +430,57 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
       <div className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950">
         <div className="p-4">
           {/* Status bar */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
-              {isPending && <><Loader2 className="h-3 w-3 animate-spin" /> Saving...</>}
-              {!isPending && importStatus === "done" && <><CheckCircle2 className="h-3 w-3 text-emerald-500" /> Data imported</>}
-              {!isPending && importStatus === "error" && <><AlertCircle className="h-3 w-3 text-red-400" /> Import failed</>}
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400" aria-live="polite">
+              {isPending && <><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> Saving…</>}
+              {!isPending && importStatus === "done" && <><CheckCircle2 className="h-3 w-3 text-emerald-500" aria-hidden="true" /> Data imported</>}
+              {!isPending && importStatus === "error" && <><AlertCircle className="h-3 w-3 text-red-400" aria-hidden="true" /> Import failed</>}
             </div>
-            {!hasDetails && (
-              <a href="/dashboard/details"
-                className="inline-flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/50 px-2.5 py-1 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors">
-                <Sparkles className="h-3 w-3" /> Fill in your details to personalize →
-              </a>
-            )}
+            <div className="flex items-center gap-2">
+              {!hasDetails && (
+                <a href="/dashboard/details"
+                  className="hidden sm:inline-flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/50 px-2.5 py-1.5 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors">
+                  <Sparkles className="h-3 w-3" aria-hidden="true" /> Fill in your details to personalize →
+                </a>
+              )}
+              <button
+                onClick={surpriseMe}
+                disabled={isPending}
+                title="Randomize layout, theme and colors"
+                className="press-scale btn-shine inline-flex items-center gap-1.5 text-xs font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-3.5 py-2 rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+              >
+                <Dices className={cn("h-3.5 w-3.5", rolling && "dice-roll")} aria-hidden="true" />
+                Surprise me
+              </button>
+            </div>
           </div>
 
           {/* Portfolio preview */}
           {componentIds.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-40 text-center">
-              <div className="h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-4">
-                <Sparkles className="h-7 w-7 text-zinc-400" />
+            <div className="fade-in flex flex-col items-center justify-center py-36 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white/60 dark:bg-zinc-900/40">
+              <div className="h-16 w-16 bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-950 dark:to-indigo-950 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                <Sparkles className="h-7 w-7 text-violet-500" aria-hidden="true" />
               </div>
               <h3 className="font-semibold text-zinc-900 dark:text-white mb-1">Start building your portfolio</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Add sections from the library to preview them here</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5 max-w-xs">
+                Add sections from the library — they&apos;ll preview here exactly as visitors will see them.
+              </p>
               <button onClick={() => setShowLibrary(true)}
-                className="inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 cursor-pointer">
-                <Plus className="h-4 w-4" /> Browse Library
+                className="press-scale inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500">
+                <Plus className="h-4 w-4" aria-hidden="true" /> Browse Library
               </button>
             </div>
           ) : (() => {
-            // Resolve theme tokens
-            const themeTokens = getThemeTokenStyle(portfolio?.themeId ?? "minimalist");
+            // Resolve theme tokens (live state — updates instantly on randomize)
+            const themeTokens = getThemeTokenStyle(themeId);
 
             // Resolve pattern
             let patternStyle: React.CSSProperties = {};
             let patternBaseColor: string | null = null;
-            if (portfolio?.patternId) {
-              const pattern = getPatternById(portfolio.patternId);
+            if (activePattern.id) {
+              const pattern = getPatternById(activePattern.id);
               if (pattern) {
-                const config = (portfolio.patternConfig as PatternConfig | null) ?? pattern.defaults;
+                const config = activePattern.config ?? pattern.defaults;
                 patternStyle = pattern.render(config);
                 patternBaseColor = config.baseColor;
               }
@@ -341,34 +489,50 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
             const rootBg = patternBaseColor ?? (themeTokens["--pf-bg"] as string) ?? "#ffffff";
 
             return (
-              <div
-                className="pf-themed border border-zinc-200 dark:border-zinc-700 rounded-2xl overflow-hidden shadow-sm"
-                style={{
-                  ...(themeTokens as React.CSSProperties),
-                  background: rootBg,
-                  color: "var(--pf-fg)",
-                  position: "relative",
-                }}
-              >
-                {/* Pattern overlay inside the preview box */}
-                {portfolio?.patternId && (
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      pointerEvents: "none",
-                      zIndex: 0,
-                      ...patternStyle,
-                    }}
-                  />
-                )}
-                <div style={{ position: "relative", zIndex: 1 }}>
-                  {componentIds.map((id) => {
-                    const baseId = id.includes(":") ? id.split(":")[0] : id;
-                    const Component = componentMap[baseId];
-                    return Component ? <Component key={id} data={portfolioData} /> : null;
-                  })}
+              <div className="fade-in rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 shadow-md bg-white dark:bg-zinc-900">
+                {/* Browser chrome — makes the preview read as the live site */}
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-100/90 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700" aria-hidden="true">
+                  <div className="flex gap-1.5 shrink-0">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400/90" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400/90" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/90" />
+                  </div>
+                  <div className="flex-1 flex justify-center min-w-0">
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-full px-3.5 py-1 truncate max-w-[260px]">
+                      portfolioforge.dev/u/{portfolio?.slug ?? "you"}
+                    </span>
+                  </div>
+                  <div className="w-12 shrink-0" />
+                </div>
+                <div
+                  className="pf-themed"
+                  style={{
+                    ...(themeTokens as React.CSSProperties),
+                    background: rootBg,
+                    color: "var(--pf-fg)",
+                    position: "relative",
+                  }}
+                >
+                  {/* Pattern overlay inside the preview box */}
+                  {activePattern.id && (
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        pointerEvents: "none",
+                        zIndex: 0,
+                        ...patternStyle,
+                      }}
+                    />
+                  )}
+                  <div style={{ position: "relative", zIndex: 1 }}>
+                    {componentIds.map((id) => {
+                      const baseId = id.includes(":") ? id.split(":")[0] : id;
+                      const Component = componentMap[baseId];
+                      return Component ? <Component key={id} data={portfolioData} /> : null;
+                    })}
+                  </div>
                 </div>
               </div>
             );
@@ -379,12 +543,24 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
       {/* Library drawer */}
       {showLibrary && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setShowLibrary(false)} />
-          <div className="relative ml-auto w-[480px] max-w-full bg-white dark:bg-zinc-900 shadow-xl flex flex-col h-full">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] fade-in" onClick={() => setShowLibrary(false)} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Component Library"
+            className="drawer-in relative ml-auto w-[480px] max-w-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col h-full"
+          >
             <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <h2 className="font-semibold text-zinc-900 dark:text-white">Component Library</h2>
-              <button onClick={() => setShowLibrary(false)} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer">
-                <X className="h-5 w-5" />
+              <div>
+                <h2 className="font-semibold text-zinc-900 dark:text-white">Component Library</h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Pick sections to add to your portfolio</p>
+              </div>
+              <button
+                onClick={() => setShowLibrary(false)}
+                aria-label="Close library"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 space-y-2">
@@ -446,9 +622,10 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
                         {isAdded ? (
                           <button
                             onClick={() => removeComponent(componentIds.find((cId) => (cId.includes(":") ? cId.split(":")[0] : cId) === comp.id)!)}
-                            className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors cursor-pointer"
+                            aria-label={`Remove ${comp.name}`}
+                            className="press-scale flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
                           >
-                            <X className="h-3 w-3" /> Remove
+                            <X className="h-3 w-3" aria-hidden="true" /> Remove
                           </button>
                         ) : isSubcategoryUsed ? (
                           <span className="flex-shrink-0 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 cursor-not-allowed">
@@ -457,16 +634,17 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
                         ) : (
                           <button
                             onClick={() => addComponent(comp.id)}
+                            aria-label={isLocked ? `${comp.name} requires Pro` : `Add ${comp.name}`}
                             className={cn(
-                              "flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer",
+                              "press-scale flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500",
                               isLocked
                                 ? "bg-violet-100 text-violet-700 hover:bg-violet-200"
                                 : "bg-zinc-900 text-white hover:bg-zinc-700"
                             )}
                           >
                             {isLocked
-                              ? <><Zap className="h-3 w-3" /> Pro</>
-                              : <><Plus className="h-3 w-3" /> Add</>
+                              ? <><Zap className="h-3 w-3" aria-hidden="true" /> Pro</>
+                              : <><Plus className="h-3 w-3" aria-hidden="true" /> Add</>
                             }
                           </button>
                         )}

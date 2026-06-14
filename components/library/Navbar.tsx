@@ -27,6 +27,9 @@ export default function Navbar() {
           <Link href="/components" className="px-3 py-1.5 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
             Components
           </Link>
+          <Link href="/patterns" className="px-3 py-1.5 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+            Patterns
+          </Link>
           <Link href="/docs" className="px-3 py-1.5 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
             Docs
           </Link>

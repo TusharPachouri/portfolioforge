@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useCallback } from "react";
-import { patterns, getPatternById, getPatternsByCategory } from "@/lib/patterns/registry";
+import { patterns, getPatternById } from "@/lib/patterns/registry";
 import { PatternConfig, PatternCategory, BLEND_MODES, DEFAULT_PATTERN_CONFIG } from "@/lib/patterns/types";
 import { savePattern, toggleFavourite } from "@/lib/actions/portfolio";
 import {
@@ -17,7 +17,9 @@ interface Props {
 const CATEGORIES: { id: PatternCategory | "all"; label: string }[] = [
   { id: "all", label: "All" },
   { id: "gradient", label: "Gradients" },
-  { id: "dots", label: "Dots" },
+  { id: "geometric", label: "Geometric" },
+  { id: "effects", label: "Effects" },
+  { id: "decorative", label: "Decorative" },
 ];
 
 export default function PatternPicker({ currentPatternId, currentConfig, initialFavourites }: Props) {
@@ -29,6 +31,7 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [favLimitHit, setFavLimitHit] = useState(false);
 
   // Filter patterns
   const filtered = patterns.filter((p) => {
@@ -73,9 +76,13 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
   const handleCopyCss = async () => {
     if (!selectedPattern) return;
     const css = selectedPattern.toCss(config);
-    await navigator.clipboard.writeText(css);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(css);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (permissions / insecure context) — leave button state unchanged
+    }
   };
 
   // Toggle favourite
@@ -83,8 +90,12 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
     const next = new Set(favourites);
     if (next.has(patternId)) {
       next.delete(patternId);
+      setFavLimitHit(false);
     } else {
-      if (next.size >= 10) return; // free tier limit
+      if (next.size >= 10) {
+        setFavLimitHit(true); // free tier limit
+        return;
+      }
       next.add(patternId);
     }
     setFavourites(next);
@@ -145,55 +156,70 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
               const isFav = favourites.has(pattern.id);
               const preview = pattern.render(pattern.defaults);
               return (
-                <button
+                <div
                   key={pattern.id}
-                  onClick={() => {
-                    setSelectedId(pattern.id);
-                    setConfig(pattern.defaults);
-                    setSaved(false);
-                  }}
-                  aria-label={`${pattern.name}, Free`}
-                  className={`relative group aspect-square rounded-xl border-2 transition-all cursor-pointer overflow-hidden ${
+                  className={`relative group aspect-square rounded-xl border-2 transition-all overflow-hidden ${
                     isSelected
                       ? "border-violet-500 shadow-md ring-2 ring-violet-200"
-                      : "border-zinc-200 hover:border-zinc-400"
+                      : "border-zinc-200 hover:border-zinc-400 focus-within:border-zinc-400"
                   }`}
                 >
-                  {/* Pattern thumbnail */}
-                  <div className="absolute inset-0" style={{
-                    ...preview,
-                    backgroundColor: pattern.defaults.baseColor,
-                  }} />
+                  {/* Select pattern — covers the whole card */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedId(pattern.id);
+                      setConfig(pattern.defaults);
+                      setSaved(false);
+                    }}
+                    aria-label={`${pattern.name}, Free`}
+                    aria-pressed={isSelected}
+                    className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-violet-500"
+                  >
+                    {/* Pattern thumbnail */}
+                    <span className="absolute inset-0" style={{
+                      ...preview,
+                      backgroundColor: pattern.defaults.baseColor,
+                    }} />
 
-                  {/* Name overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2">
-                    <p className="text-white text-[10px] font-medium truncate">{pattern.name}</p>
-                  </div>
+                    {/* Name overlay */}
+                    <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2 text-left">
+                      <span className="block text-white text-[11px] font-medium truncate">{pattern.name}</span>
+                    </span>
+                  </button>
 
                   {/* Selection check */}
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 h-5 w-5 bg-violet-500 rounded-full flex items-center justify-center">
-                      <Check className="h-3 w-3 text-white" />
+                    <div className="pointer-events-none absolute top-1.5 right-1.5 h-5 w-5 bg-violet-500 rounded-full flex items-center justify-center">
+                      <Check className="h-3 w-3 text-white" aria-hidden="true" />
                     </div>
                   )}
 
-                  {/* Favourite toggle */}
+                  {/* Favourite toggle — sibling, not nested, so the markup stays valid */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleFavourite(pattern.id); }}
-                    className={`absolute top-1.5 left-1.5 h-6 w-6 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                    type="button"
+                    onClick={() => handleFavourite(pattern.id)}
+                    aria-label={isFav ? `Remove ${pattern.name} from favourites` : `Add ${pattern.name} to favourites`}
+                    aria-pressed={isFav}
+                    className={`absolute top-1 left-1 z-10 h-8 w-8 rounded-full flex items-center justify-center transition-all cursor-pointer focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-violet-500 ${
                       isFav
                         ? "bg-red-500 text-white"
-                        : "bg-white/80 text-zinc-400 opacity-0 group-hover:opacity-100"
+                        : "bg-white/80 text-zinc-500 opacity-0 group-hover:opacity-100"
                     }`}
                   >
-                    <Heart className={`h-3 w-3 ${isFav ? "fill-current" : ""}`} />
+                    <Heart className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} aria-hidden="true" />
                   </button>
-                </button>
+                </div>
               );
             })}
           </div>
+          {favLimitHit && (
+            <p role="alert" className="text-xs text-amber-600 mt-3">
+              Favourite limit reached — you can save up to 10 patterns on the free plan.
+            </p>
+          )}
           {filtered.length === 0 && (
-            <div className="text-center py-12 text-zinc-400">
+            <div className="text-center py-12 text-zinc-500">
               <p className="text-sm">No patterns found</p>
             </div>
           )}
@@ -222,10 +248,11 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
 
               {/* Primary color */}
               <div className="flex items-center justify-between">
-                <label className="text-xs text-zinc-500">Primary</label>
+                <label htmlFor="pattern-c1" className="text-xs text-zinc-500">Primary</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-zinc-400">{config.c1}</span>
+                  <span className="text-xs text-zinc-500">{config.c1}</span>
                   <input
+                    id="pattern-c1"
                     type="color"
                     value={config.c1}
                     onChange={(e) => updateConfig("c1", e.target.value)}
@@ -236,10 +263,11 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
 
               {/* Secondary color */}
               <div className="flex items-center justify-between">
-                <label className="text-xs text-zinc-500">Secondary</label>
+                <label htmlFor="pattern-c2" className="text-xs text-zinc-500">Secondary</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-zinc-400">{config.c2}</span>
+                  <span className="text-xs text-zinc-500">{config.c2}</span>
                   <input
+                    id="pattern-c2"
                     type="color"
                     value={config.c2}
                     onChange={(e) => updateConfig("c2", e.target.value)}
@@ -250,10 +278,11 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
 
               {/* Base color */}
               <div className="flex items-center justify-between">
-                <label className="text-xs text-zinc-500">Base</label>
+                <label htmlFor="pattern-base" className="text-xs text-zinc-500">Base</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-zinc-400">{config.baseColor}</span>
+                  <span className="text-xs text-zinc-500">{config.baseColor}</span>
                   <input
+                    id="pattern-base"
                     type="color"
                     value={config.baseColor}
                     onChange={(e) => updateConfig("baseColor", e.target.value)}
@@ -265,10 +294,11 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
               {/* Scale slider */}
               <div>
                 <div className="flex justify-between mb-1">
-                  <label className="text-xs text-zinc-500">Scale</label>
-                  <span className="text-xs text-zinc-400">{config.scale}</span>
+                  <label htmlFor="pattern-scale" className="text-xs text-zinc-500">Scale</label>
+                  <span className="text-xs text-zinc-500">{config.scale}</span>
                 </div>
                 <input
+                  id="pattern-scale"
                   type="range"
                   min={10}
                   max={200}
@@ -281,10 +311,11 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
               {/* Opacity slider */}
               <div>
                 <div className="flex justify-between mb-1">
-                  <label className="text-xs text-zinc-500">Opacity</label>
-                  <span className="text-xs text-zinc-400">{config.opacity}%</span>
+                  <label htmlFor="pattern-opacity" className="text-xs text-zinc-500">Opacity</label>
+                  <span className="text-xs text-zinc-500">{config.opacity}%</span>
                 </div>
                 <input
+                  id="pattern-opacity"
                   type="range"
                   min={0}
                   max={100}
@@ -296,8 +327,9 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
 
               {/* Blend mode */}
               <div>
-                <label className="text-xs text-zinc-500 block mb-1">Blend Mode</label>
+                <label htmlFor="pattern-blend" className="text-xs text-zinc-500 block mb-1">Blend Mode</label>
                 <select
+                  id="pattern-blend"
                   value={config.blendMode}
                   onChange={(e) => updateConfig("blendMode", e.target.value)}
                   className="w-full text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-violet-200 cursor-pointer"

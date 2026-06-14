@@ -12,6 +12,9 @@ export const users = pgTable("users", {
   email: text("email").unique(),
   emailVerified: timestamp("email_verified", { mode: "date" }),
   image: text("image"),
+  // Credentials auth — null for OAuth-only users. Username doubles as the portfolio slug.
+  username: text("username").unique(),
+  passwordHash: text("password_hash"),
   role: text("role", { enum: ["free", "pro", "admin"] }).notNull().default("free"),
   stripeCustomerId: text("stripe_customer_id").unique(),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),

@@ -3,6 +3,7 @@ import { portfolios, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { componentMap } from "@/lib/components/map";
+import { demoData } from "@/lib/demo-data";
 import { PortfolioData } from "@/types/portfolio";
 import { getThemeTokenStyle } from "@/lib/themes";
 import { getPatternById } from "@/lib/patterns/registry";
@@ -22,11 +23,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     where: eq(portfolios.slug, slug),
   });
 
-  if (!portfolio || !portfolio.published || !portfolio.portfolioData) {
+  if (!portfolio || !portfolio.published) {
     return { title: "Portfolio — PortfolioForge" };
   }
 
-  const data = portfolio.portfolioData as PortfolioData;
+  // Same fallback as the page itself: unpersonalized portfolios publish the demo data
+  const data = (portfolio.portfolioData as PortfolioData | null) ?? demoData;
   const { meta, hero } = data;
 
   return {
@@ -68,8 +70,10 @@ export default async function PublicPortfolioPage({ params }: Props) {
   // 404 for missing or unpublished (no enumeration)
   if (!portfolio || !portfolio.published) notFound();
 
-  const data = portfolio.portfolioData as PortfolioData | null;
-  if (!data) notFound();
+  // Owners who haven't personalized yet publish exactly what the dashboard
+  // preview showed them — the demo data. The dashboard nudges them to fill
+  // in details; the live link must never 404 once published.
+  const data = (portfolio.portfolioData as PortfolioData | null) ?? demoData;
 
   const owner = await db.query.users.findFirst({
     where: eq(users.id, portfolio.userId),

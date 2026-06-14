@@ -84,3 +84,241 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* ── Landing page motion system ──────────────────────────────────────────── */
+
+/* Editorial serif accent (Instrument Serif via next/font) */
+.font-display-serif {
+  font-family: var(--font-serif-display), Georgia, "Times New Roman", serif;
+}
+
+/* Word-by-word headline rise on first paint (pure CSS — works without JS) */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: none; }
+}
+.hero-word {
+  display: inline-block;
+  opacity: 0;
+  animation: hero-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.hero-rise-block {
+  opacity: 0;
+  animation: hero-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 3D tilt cards with specular glare (driven by TiltCard) */
+.tilt-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tilt-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    420px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(139, 92, 246, 0.14),
+    rgba(255, 255, 255, 0.07) 40%,
+    transparent 65%
+  );
+}
+.tilt-card:hover .tilt-glare {
+  opacity: 1;
+}
+
+/* Gradient hairline border that fades in on hover */
+.card-premium {
+  position: relative;
+}
+.card-premium::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.45), rgba(99, 102, 241, 0.2) 45%, transparent 70%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.card-premium:hover::before {
+  opacity: 1;
+}
+
+/* "How it works" connector line — draws itself when the section reveals */
+.steps-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 95px;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #ddd6fe, #c7d2fe 50%, #ddd6fe);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s;
+}
+.is-revealed .steps-line {
+  transform: scaleX(1);
+}
+
+/* Scroll reveal (elements get .is-revealed from IntersectionObserver) */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Animated gradient headline */
+.text-gradient-animated {
+  background-image: linear-gradient(90deg, #7c3aed, #d946ef, #6366f1, #7c3aed);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-pan 8s linear infinite;
+}
+@keyframes gradient-pan {
+  to { background-position: 300% 0; }
+}
+
+/* Shimmer sweep across primary CTAs on hover */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.25) 50%, transparent 70%);
+  background-size: 250% 100%;
+  background-position: 200% 0;
+  transition: background-position 0.7s ease;
+  pointer-events: none;
+}
+.btn-shine:hover::after {
+  background-position: -50% 0;
+}
+
+/* Hero backdrop: dot grid fading out from the top + drifting gradient blobs */
+.hero-dots {
+  background-image: radial-gradient(rgba(139, 92, 246, 0.35) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 25%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 25%, transparent 72%);
+}
+.hero-blob {
+  animation: blob-drift 16s ease-in-out infinite alternate;
+}
+.hero-blob-2 {
+  animation: blob-drift 21s ease-in-out infinite alternate-reverse;
+}
+@keyframes blob-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(36px, -24px, 0) scale(1.07); }
+  100% { transform: translate3d(-28px, 18px, 0) scale(0.96); }
+}
+
+/* Pattern swatch marquee */
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.marquee-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  animation: marquee-scroll 48s linear infinite;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+.marquee-reverse .marquee-track {
+  animation-direction: reverse;
+}
+@keyframes marquee-scroll {
+  to { transform: translate3d(calc(-50% - 6px), 0, 0); }
+}
+
+/* Aurora wash behind the dark CTA section */
+.cta-aurora {
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 300px at 25% 30%, rgba(124, 58, 237, 0.35), transparent 60%),
+    radial-gradient(460px 280px at 75% 70%, rgba(99, 102, 241, 0.3), transparent 60%),
+    radial-gradient(380px 240px at 55% 20%, rgba(217, 70, 239, 0.16), transparent 60%);
+  animation: aurora-drift 18s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0%   { transform: translate3d(-4%, -2%, 0) rotate(0deg); }
+  100% { transform: translate3d(4%, 2%, 0) rotate(6deg); }
+}
+
+/* ── Dashboard micro-motion ──────────────────────────────────────────────── */
+
+@keyframes slide-up-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+.toast-in {
+  animation: slide-up-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes drawer-in {
+  from { transform: translateX(48px); opacity: 0.4; }
+  to   { transform: none; opacity: 1; }
+}
+.drawer-in {
+  animation: drawer-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+.press-scale {
+  transition: transform 0.15s ease;
+}
+.press-scale:active {
+  transform: scale(0.97);
+}
+@keyframes dice-roll {
+  from { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.25); }
+  to   { transform: rotate(360deg) scale(1); }
+}
+.dice-roll {
+  animation: dice-roll 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
