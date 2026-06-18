@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Logo from "@/components/Logo";
 import { useBuilderState } from "@/hooks/useBuilderState";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useSession } from "next-auth/react";
@@ -38,47 +39,48 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-zinc-100">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-2 sm:gap-3">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 text-sm shrink-0" onClick={close}>
-            <div className="h-7 w-7 rounded-lg bg-zinc-900 flex items-center justify-center shrink-0 shadow-sm">
-              <span className="text-white text-xs font-bold">PF</span>
-            </div>
-            {/* Hide text on very small screens to make room for everything */}
+      <header className="sticky top-0 md:top-6 md:mt-6 z-[100] w-full md:w-max mx-auto bg-white/80 md:bg-white/70 backdrop-blur-md border-b border-zinc-100 md:border md:border-zinc-200/60 md:rounded-full md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300">
+        <div className="mx-auto px-4 md:px-2 md:pr-2 h-14 md:h-[56px] flex items-center justify-between gap-2 sm:gap-3 md:gap-2">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 text-sm shrink-0 md:px-3 md:py-2 md:hover:bg-zinc-100/80 md:rounded-full transition-colors" onClick={close}>
+            <Logo className="h-7 w-7" />
             <span className="hidden sm:inline">PortfolioForge</span>
           </Link>
 
+          <div className="hidden md:block h-6 w-px opacity-15 bg-zinc-900 mx-1" />
+
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link href="/components" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+            <Link href="/components" className="px-3 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 rounded-full transition-colors">
               Components
             </Link>
-            <Link href="/patterns" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+            <Link href="/patterns" className="px-3 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 rounded-full transition-colors">
               Patterns
             </Link>
-            <Link href="/docs" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+            <Link href="/docs" className="px-3 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 rounded-full transition-colors">
               Docs
             </Link>
           </nav>
 
+          <div className="hidden md:block h-6 w-px opacity-15 bg-zinc-900 mx-1" />
+
           <div className="flex items-center gap-1.5 sm:gap-2">
             {isCustom && (
               <button onClick={resetToDemo}
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer">
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-800 px-3 py-2 rounded-full hover:bg-zinc-100/80 transition-colors cursor-pointer">
                 <RotateCcw className="h-3.5 w-3.5" /> Reset
               </button>
             )}
 
             {/* Hide Personalize in top bar on mobile so it only appears in the menu */}
             <Link href="/personalize"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium bg-white border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors shadow-sm">
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium bg-white/50 border border-zinc-200/80 text-zinc-700 px-4 py-2 rounded-full hover:bg-white transition-colors shadow-sm">
               <Sparkles className="h-3.5 w-3.5 text-violet-500" />
               {isCustom ? "Edit details" : "Personalize"}
             </Link>
 
             {count > 0 && (
               <Link href="/preview"
-                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-3 py-1.5 rounded-lg hover:bg-zinc-700 transition-colors shadow-sm">
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-4 py-2 rounded-full hover:bg-zinc-800 transition-colors shadow-sm">
                 <Layers className="h-3.5 w-3.5" />
                 Preview
                 <span className="bg-white/20 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
@@ -90,18 +92,18 @@ export default function Navbar() {
             {/* Auth-aware right side (visible on mobile too) */}
             {isSignedIn ? (
               <Link href="/dashboard"
-                className="inline-flex items-center gap-2 text-sm font-medium border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors shadow-sm">
+                className="inline-flex items-center gap-2 text-sm font-medium bg-white/50 border border-zinc-200/80 text-zinc-700 px-4 py-2 rounded-full hover:bg-white transition-colors shadow-sm">
                 {session.user?.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={session.user.image} alt="" className="h-5 w-5 rounded-full" />
+                  <img src={session.user.image} alt="" className="h-5 w-5 rounded-full border border-zinc-200" />
                 ) : (
                   <LayoutDashboard className="h-4 w-4" />
                 )}
-                <span>Dashboard</span>
+                <span className="hidden sm:inline">Dashboard</span>
               </Link>
             ) : (
               <Link href="/auth/signin"
-                className="inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors shadow-sm">
+                className="inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-5 py-2 rounded-full hover:bg-zinc-800 transition-colors shadow-sm">
                 Sign in
               </Link>
             )}

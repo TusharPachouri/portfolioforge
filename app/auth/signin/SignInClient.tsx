@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { Loader2, Eye, EyeOff, Check, X, AtSign, KeyRound, Mail } from "lucide-react";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { checkUsername, registerUser, UsernameCheck } from "@/lib/actions/auth";
 
 interface Props {
@@ -108,9 +109,7 @@ export default function SignInClient({ callbackUrl, error }: Props) {
       <div className="relative w-full max-w-sm">
         {/* Logo + heading */}
         <div className="text-center mb-8">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-zinc-900 to-zinc-700 flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <span className="text-white font-bold text-lg">PF</span>
-          </div>
+          <Logo className="h-12 w-12 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
             {mode === "signin" ? (
               <>Welcome <span className="font-display-serif italic font-normal">back</span></>

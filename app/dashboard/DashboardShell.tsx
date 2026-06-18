@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Logo from "@/components/Logo";
 import { Session } from "next-auth";
 import { Portfolio } from "@/lib/db/schema";
 import { signOut } from "next-auth/react";
@@ -175,9 +176,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
               <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
             <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-white text-sm">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-zinc-600 dark:to-zinc-800 flex items-center justify-center shadow-sm">
-                <span className="text-white text-xs font-bold">PF</span>
-              </div>
+              <Logo className="h-7 w-7" />
               <span className="hidden sm:inline">PortfolioForge</span>
             </Link>
           </div>
@@ -283,9 +282,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
           >
             <div className="flex items-center justify-between px-1 mb-4">
               <Link href="/" onClick={() => setMobileNav(false)} className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-white text-sm">
-                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">PF</span>
-                </div>
+                <Logo className="h-7 w-7" />
                 PortfolioForge
               </Link>
               <button

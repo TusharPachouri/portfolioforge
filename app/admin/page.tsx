@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { users, portfolios, subscriptions } from "@/lib/db/schema";
 import { eq, count, desc } from "drizzle-orm";
 import { Users, Globe, Zap, BarChart2 } from "lucide-react";
+import Logo from "@/components/Logo";
 
 export const metadata = { title: "Admin — PortfolioForge" };
 // Force dynamic so this never pre-renders during build (requires auth + live DB)
@@ -76,9 +77,7 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-zinc-50">
       <header className="bg-white border-b border-zinc-200 px-6 py-4">
         <h1 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-zinc-900 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">PF</span>
-          </div>
+          <Logo className="h-7 w-7" />
           Admin Panel
         </h1>
       </header>

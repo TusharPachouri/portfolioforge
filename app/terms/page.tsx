@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export const metadata = {
   title: "Terms of Service — PortfolioForge",
@@ -11,9 +12,7 @@ export default function TermsPage() {
       <header className="border-b border-zinc-100">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 text-sm">
-            <div className="h-7 w-7 rounded-lg bg-zinc-900 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">PF</span>
-            </div>
+            <Logo className="h-7 w-7" />
             PortfolioForge
           </Link>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createCheckoutSession } from "@/lib/actions/billing";
+import { createCheckoutSession, upgradeToProForFree } from "@/lib/actions/billing";
 import { Check, Sparkles, Loader2, Zap } from "lucide-react";
 import Link from "next/link";
 
@@ -34,7 +34,7 @@ export default function UpgradePageClient() {
 
   const handleUpgrade = () => {
     startTransition(async () => {
-      await createCheckoutSession(plan);
+      await upgradeToProForFree();
     });
   };
 

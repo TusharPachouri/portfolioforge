@@ -10,6 +10,7 @@ import { getPatternById } from "@/lib/patterns/registry";
 import { PatternConfig } from "@/lib/patterns/types";
 import type { Metadata } from "next";
 import ViewRecorder from "./ViewRecorder";
+import FloatingNavbar from "@/components/portfolio/FloatingNavbar";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -129,6 +130,7 @@ export default async function PublicPortfolioPage({ params }: Props) {
 
       {/* Content sits above the pattern overlay */}
       <div style={{ position: "relative", zIndex: 1 }}>
+        <FloatingNavbar data={data} />
         {ids.map((id) => {
           const baseId = id.includes(":") ? id.split(":")[0] : id;
           const Component = componentMap[baseId];

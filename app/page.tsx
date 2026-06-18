@@ -8,6 +8,7 @@ import CountUp from "@/components/landing/CountUp";
 import Magnetic from "@/components/landing/Magnetic";
 import TiltCard from "@/components/landing/TiltCard";
 import Parallax from "@/components/landing/Parallax";
+import Logo from "@/components/Logo";
 import { ArrowRight, Sparkles, Layers, Zap, Code2, Eye, Users, Check } from "lucide-react";
 
 const HEADLINE_LEAD = ["Build", "a", "stunning"];
@@ -55,7 +56,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden -mt-[56px] md:-mt-[80px] pt-[56px] md:pt-[80px]">
         {/* Backdrop: soft wash + rotating aurora + dot grid + parallax glow blobs */}
         <div className="absolute inset-0 bg-gradient-to-b from-violet-50/70 via-white to-white pointer-events-none" aria-hidden="true" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
@@ -257,9 +258,7 @@ export default function HomePage() {
         <div className="h-px bg-gradient-to-r from-transparent via-violet-200 to-transparent" aria-hidden="true" />
         <div className="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-md bg-zinc-900 flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">PF</span>
-            </div>
+            <Logo className="h-6 w-6" />
             <span className="text-sm font-semibold text-zinc-900">PortfolioForge</span>
           </div>
           <nav aria-label="Footer" className="flex items-center gap-4 text-sm text-zinc-500">

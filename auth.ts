@@ -61,9 +61,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        // Fetch role from DB
+      }
+      if (token.id) {
+        // Fetch role from DB on every session check to ensure it's fresh
         const dbUser = await db.query.users.findFirst({
-          where: eq(users.id, user.id!),
+          where: eq(users.id, token.id as string),
         });
         token.role = dbUser?.role ?? "free";
       }

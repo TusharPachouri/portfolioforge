@@ -58,6 +58,18 @@ export async function createCheckoutSession(plan: "monthly" | "annual") {
   redirect(session.url);
 }
 
+// ─── Free Upgrade (Temporary) ──────────────────────────────────────────────────
+
+export async function upgradeToProForFree() {
+  const user = await requireAuth();
+  
+  await db.update(users)
+    .set({ role: "pro", updatedAt: new Date() })
+    .where(eq(users.id, user.id));
+
+  redirect("/dashboard?upgrade=success");
+}
+
 // ─── Open billing portal ──────────────────────────────────────────────────────
 
 export async function openBillingPortal() {
