@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { portfolioViews, portfolios } from "./db/schema";
-import { eq, sql, desc, count } from "drizzle-orm";
+import { eq, sql, desc, count, and, gte, isNotNull } from "drizzle-orm";
 
 const BOT_UA_PATTERNS = [
   /bot/i, /crawl/i, /spider/i, /slurp/i, /googlebot/i,
@@ -28,6 +28,18 @@ export async function recordView(
 export async function getAnalytics(portfolioId: string) {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
+  // Use typed Drizzle operators (not raw `sql` with an interpolated Date) so the
+  // driver encodes the timestamp param correctly. Interpolating a bare Date into
+  // a sql template throws "Received an instance of Date".
+  const recent = and(
+    eq(portfolioViews.portfolioId, portfolioId),
+    gte(portfolioViews.viewedAt, thirtyDaysAgo),
+  );
+
+  // Plain 'YYYY-MM-DD' string (forced to UTC) so it matches the client's date
+  // keys — DATE() comes back as a JS Date which never === the string key.
+  const dayExpr = sql<string>`to_char(${portfolioViews.viewedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`;
+
   const [totalViews, recentViews, topReferrers, topCountries, dailyViews] = await Promise.all([
     // Total all-time views
     db.select({ count: count() })
@@ -38,51 +50,31 @@ export async function getAnalytics(portfolioId: string) {
     // Views in last 30 days
     db.select({ count: count() })
       .from(portfolioViews)
-      .where(
-        sql`${portfolioViews.portfolioId} = ${portfolioId} AND ${portfolioViews.viewedAt} >= ${thirtyDaysAgo}`
-      )
+      .where(recent)
       .then((r) => r[0]?.count ?? 0),
 
     // Top referrers (last 30 days)
-    db.select({
-      referrer: portfolioViews.referrer,
-      count: count(),
-    })
+    db.select({ referrer: portfolioViews.referrer, count: count() })
       .from(portfolioViews)
-      .where(
-        sql`${portfolioViews.portfolioId} = ${portfolioId} AND ${portfolioViews.viewedAt} >= ${thirtyDaysAgo} AND ${portfolioViews.referrer} IS NOT NULL`
-      )
+      .where(and(recent, isNotNull(portfolioViews.referrer)))
       .groupBy(portfolioViews.referrer)
       .orderBy(desc(count()))
       .limit(10),
 
     // Top countries (last 30 days)
-    db.select({
-      country: portfolioViews.country,
-      count: count(),
-    })
+    db.select({ country: portfolioViews.country, count: count() })
       .from(portfolioViews)
-      .where(
-        sql`${portfolioViews.portfolioId} = ${portfolioId} AND ${portfolioViews.viewedAt} >= ${thirtyDaysAgo} AND ${portfolioViews.country} IS NOT NULL`
-      )
+      .where(and(recent, isNotNull(portfolioViews.country)))
       .groupBy(portfolioViews.country)
       .orderBy(desc(count()))
       .limit(10),
 
-    // Daily views for chart (last 30 days).
-    // to_char(...) returns a plain 'YYYY-MM-DD' string (forced to UTC) so it
-    // matches the client's date keys — DATE() comes back as a JS Date which
-    // never === the string key, silently zeroing the chart.
-    db.select({
-      day: sql<string>`to_char(${portfolioViews.viewedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`.as("day"),
-      count: count(),
-    })
+    // Daily views for chart (last 30 days)
+    db.select({ day: dayExpr.as("day"), count: count() })
       .from(portfolioViews)
-      .where(
-        sql`${portfolioViews.portfolioId} = ${portfolioId} AND ${portfolioViews.viewedAt} >= ${thirtyDaysAgo}`
-      )
-      .groupBy(sql`to_char(${portfolioViews.viewedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`)
-      .orderBy(sql`to_char(${portfolioViews.viewedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`),
+      .where(recent)
+      .groupBy(dayExpr)
+      .orderBy(dayExpr),
   ]);
 
   return { totalViews, recentViews, topReferrers, topCountries, dailyViews };
