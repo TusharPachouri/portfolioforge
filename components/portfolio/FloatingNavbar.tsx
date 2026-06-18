@@ -1,3 +1,5 @@
+"use client";
+
 import { PortfolioData } from "@/types/portfolio";
 import { Home, Terminal, Sun } from "lucide-react";
 import { getSocialIcon } from "@/lib/social-icons";
