@@ -69,9 +69,9 @@ export default function Navbar() {
               </button>
             )}
 
-            {/* Hide Personalize in top bar on mobile when menu is open so it transitions into the big menu card */}
+            {/* Hide Personalize in top bar on mobile so it only appears in the menu */}
             <Link href="/personalize"
-              className={`inline-flex items-center gap-1.5 text-sm font-medium bg-white border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-all duration-200 shadow-sm ${open ? 'max-sm:opacity-0 max-sm:scale-95 max-sm:pointer-events-none' : 'opacity-100 scale-100'}`}>
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium bg-white border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors shadow-sm">
               <Sparkles className="h-3.5 w-3.5 text-violet-500" />
               {isCustom ? "Edit details" : "Personalize"}
             </Link>
@@ -87,21 +87,21 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Auth-aware right side (sm+) */}
+            {/* Auth-aware right side (visible on mobile too) */}
             {isSignedIn ? (
               <Link href="/dashboard"
-                className="hidden sm:inline-flex items-center gap-2 text-sm font-medium border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors shadow-sm">
-                {session.user.image ? (
+                className="inline-flex items-center gap-2 text-sm font-medium border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors shadow-sm">
+                {session.user?.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={session.user.image} alt="" className="h-5 w-5 rounded-full" />
                 ) : (
                   <LayoutDashboard className="h-4 w-4" />
                 )}
-                Dashboard
+                <span>Dashboard</span>
               </Link>
             ) : (
               <Link href="/auth/signin"
-                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors shadow-sm">
+                className="inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors shadow-sm">
                 Sign in
               </Link>
             )}
