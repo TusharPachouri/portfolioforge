@@ -32,10 +32,14 @@ export async function aiNativeChat(
     temperature: opts.temperature ?? 0.2,
   });
 
-  // Retry once on network errors / 5xx (cold-start blips), but never on 4xx
-  // (auth, credits) — those won't self-heal.
+  // The gateway / network occasionally drops the first connection ("fetch
+  // failed"). Retry with backoff so the attempts span the transient window —
+  // this is why a manual second try worked. Never retry 4xx (auth/credits).
+  const MAX_ATTEMPTS = 4;
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   let lastErr: unknown;
-  for (let attempt = 0; attempt < 2; attempt++) {
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
       const res = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
@@ -46,20 +50,21 @@ export async function aiNativeChat(
       if (!res.ok) {
         const text = await res.text().catch(() => "");
         const err = new Error(`AINative ${res.status}: ${text.slice(0, 400)}`);
-        if (res.status >= 400 && res.status < 500) throw err; // don't retry client errors
+        if (res.status >= 400 && res.status < 500) throw err; // client error — won't self-heal
         lastErr = err;
-        continue;
+      } else {
+        const json = await res.json();
+        const content = json?.choices?.[0]?.message?.content;
+        if (typeof content !== "string") throw new Error("AINative returned no content");
+        return content;
       }
-
-      const json = await res.json();
-      const content = json?.choices?.[0]?.message?.content;
-      if (typeof content !== "string") throw new Error("AINative returned no content");
-      return content;
     } catch (e) {
+      if (e instanceof Error && /AINative 4\d\d/.test(e.message)) throw e; // don't retry 4xx
       lastErr = e;
-      // If it's a 4xx we already threw above; for fetch/network errors, retry once
-      if (e instanceof Error && /AINative 4\d\d/.test(e.message)) throw e;
     }
+
+    if (attempt < MAX_ATTEMPTS) await sleep(800 * attempt); // 0.8s, 1.6s, 2.4s
   }
+
   throw lastErr instanceof Error ? lastErr : new Error("AINative request failed");
 }
