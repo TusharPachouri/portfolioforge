@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Sparkles, Download, FileCode, FileText, Check, Square, Eye, Hand } from "lucide-react";
+import { Sparkles, Download, FileCode, FileText, Eye, Hand, Check, Zap, TrendingUp } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  *  PhysicsCardCluster
- *  Hero visual — floating UI cards driven by a small spring-physics system:
+ *  Premium hero visual — glassmorphic UI cards driven by a spring-physics system:
  *  • mouse parallax by depth layer
  *  • grab-and-throw dragging with inertia and an underdamped spring return
- *  • idle bobbing stays on the compositor (CSS), physics runs in one rAF
- *    loop that goes to sleep whenever every card has settled
+ *  • idle bobbing stays on the compositor (CSS), physics runs in one rAF loop
+ *    that sleeps once every card settles
  *  Decorative only (aria-hidden); fully static under prefers-reduced-motion.
  * ──────────────────────────────────────────────────────────────────────────── */
 
@@ -25,217 +25,232 @@ interface CardSpec {
 
 const label: React.CSSProperties = {
   fontSize: 10,
-  fontWeight: 600,
+  fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  letterSpacing: "0.08em",
+};
+
+const glassLight: React.CSSProperties = {
+  background: "rgba(255,255,255,0.66)",
+  backdropFilter: "blur(22px) saturate(180%)",
+  WebkitBackdropFilter: "blur(22px) saturate(180%)",
+  color: "#27272a",
+};
+const glassDark: React.CSSProperties = {
+  background: "rgba(18,16,28,0.74)",
+  backdropFilter: "blur(22px) saturate(180%)",
+  WebkitBackdropFilter: "blur(22px) saturate(180%)",
+  color: "#fafafa",
 };
 
 const CARDS: CardSpec[] = [
+  // ── 1. AI generation (hero card) ──
   {
     id: "ai",
-    pos: { top: "6%", left: "8%", width: 232, zIndex: 7 },
+    pos: { top: "3%", left: "4%", width: 280, zIndex: 8 },
     rotate: -5,
-    depth: 1.15,
+    depth: 1.2,
     float: { dur: 3.8, delay: 0 },
     card: {
-      background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)",
+      background: "linear-gradient(140deg, #7c3aed 0%, #8b5cf6 45%, #c084fc 100%)",
       color: "#fff",
-      padding: "18px 16px",
+      padding: "20px 18px",
     },
     node: (
       <>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-          <Sparkles size={14} style={{ opacity: 0.9 }} />
-          <span style={{ ...label, letterSpacing: "0.06em", opacity: 0.85 }}>Gemini AI</span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ display: "flex", height: 24, width: 24, alignItems: "center", justifyContent: "center", borderRadius: 8, background: "rgba(255,255,255,0.2)" }}>
+              <Sparkles size={13} />
+            </span>
+            <span style={{ ...label, opacity: 0.92 }}>Gemini AI</span>
+          </div>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 999, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)" }}>LIVE</span>
         </div>
-        <div style={{ height: 3, borderRadius: 4, background: "rgba(255,255,255,0.2)", marginBottom: 14, overflow: "hidden", position: "relative" }}>
+        <div style={{ height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", marginBottom: 8, overflow: "hidden", position: "relative" }}>
           <div style={{
             position: "absolute", inset: 0, borderRadius: 4,
-            background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.7) 50%, transparent 100%)",
-            backgroundSize: "200% 100%",
-            animation: "pc-shimmer 2s linear infinite",
+            background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 50%, transparent 100%)",
+            backgroundSize: "200% 100%", animation: "pc-shimmer 1.8s linear infinite",
           }} />
         </div>
-        <div style={{ fontSize: 11, opacity: 0.75, marginBottom: 10 }}>Structuring your data…</div>
-        <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, backdropFilter: "blur(8px)" }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #c4b5fd, #e9d5ff)", flexShrink: 0 }} />
+        <div style={{ fontSize: 11.5, opacity: 0.82, marginBottom: 14 }}>Structuring your portfolio…</div>
+        <div style={{ background: "rgba(255,255,255,0.16)", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.18)" }}>
+          <div style={{ position: "relative", width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#c4b5fd,#f0abfc)", flexShrink: 0 }}>
+            <span style={{ position: "absolute", right: -2, bottom: -2, height: 15, width: 15, borderRadius: "50%", background: "#34d399", border: "2px solid #8b5cf6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Check size={8} color="#fff" strokeWidth={3.5} />
+            </span>
+          </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.2 }}>Tushar M.</div>
-            <div style={{ fontSize: 10, opacity: 0.7 }}>Product Engineer</div>
+            <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>Tushar M.</div>
+            <div style={{ fontSize: 10.5, opacity: 0.75 }}>Product Engineer · SF</div>
           </div>
         </div>
       </>
     ),
   },
+
+  // ── 2. Component browser ──
   {
     id: "browser",
-    pos: { top: "2%", right: "4%", width: 210, zIndex: 6 },
+    pos: { top: "0%", right: "1%", width: 246, zIndex: 6 },
     rotate: 4,
     depth: 0.7,
     float: { dur: 4.2, delay: 150 },
-    card: { background: "#ffffff", border: "1px solid #e4e4e7", padding: "14px 14px 12px" },
+    card: { ...glassLight, padding: "16px 16px 14px", border: "1px solid rgba(255,255,255,0.6)" },
     node: (
       <>
-        <div style={{ ...label, color: "#71717a", marginBottom: 10 }}>Browse 27+ sections</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <span style={{ ...label, color: "#7c3aed" }}>27+ Sections</span>
+          <span style={{ fontSize: 16, lineHeight: 1, color: "#a1a1aa" }}>⌘K</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {[
-            { name: "Button", bg: "#f0fdf4", accent: "#22c55e" },
-            { name: "Card", bg: "#faf5ff", accent: "#a855f7" },
-            { name: "Badge", bg: "#fefce8", accent: "#eab308" },
-            { name: "Input", bg: "#eff6ff", accent: "#3b82f6" },
-          ].map(({ name, bg, accent }) => (
-            <div key={name} style={{ background: bg, borderRadius: 8, padding: "8px 6px", textAlign: "center", border: `1px solid ${accent}22` }}>
-              <div style={{ width: "100%", height: 4, borderRadius: 2, background: accent, marginBottom: 6, opacity: 0.5 }} />
-              <span style={{ fontSize: 10, fontWeight: 600, color: "#3f3f46" }}>{name}</span>
+            { name: "Hero", from: "#ede9fe", to: "#ddd6fe", accent: "#7c3aed" },
+            { name: "Projects", from: "#fef3c7", to: "#fde68a", accent: "#d97706" },
+            { name: "Gallery", from: "#dbeafe", to: "#bfdbfe", accent: "#2563eb" },
+            { name: "Contact", from: "#dcfce7", to: "#bbf7d0", accent: "#16a34a" },
+          ].map((c) => (
+            <div key={c.name} style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})`, borderRadius: 12, padding: "10px 10px", border: "1px solid rgba(255,255,255,0.7)" }}>
+              <div style={{ width: 22, height: 5, borderRadius: 3, background: c.accent, opacity: 0.55, marginBottom: 8 }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#3f3f46" }}>{c.name}</span>
             </div>
           ))}
         </div>
       </>
     ),
   },
+
+  // ── 3. Live preview (dark glass) ──
   {
     id: "preview",
-    pos: { top: "36%", left: "0%", width: 244, zIndex: 5 },
+    pos: { top: "36%", left: "-3%", width: 272, zIndex: 5 },
     rotate: 3,
-    depth: 0.9,
+    depth: 0.95,
     float: { dur: 4.6, delay: 300 },
-    card: { background: "#18181b", color: "#fafafa", padding: "16px 14px" },
+    card: { ...glassDark, padding: "16px 16px", border: "1px solid rgba(255,255,255,0.08)" },
     node: (
       <>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-          <Eye size={12} style={{ color: "#a78bfa" }} />
-          <span style={{ ...label, color: "#a1a1aa" }}>Live Preview</span>
-        </div>
-        <div style={{ background: "#27272a", borderRadius: 8, padding: "12px 10px", marginBottom: 8 }}>
-          <div style={{ width: "60%", height: 4, borderRadius: 2, background: "#52525b", marginBottom: 6 }} />
-          <div style={{ width: "80%", height: 3, borderRadius: 2, background: "#3f3f46", marginBottom: 4 }} />
-          <div style={{ width: "45%", height: 3, borderRadius: 2, background: "#3f3f46", marginBottom: 8 }} />
-          <div style={{ display: "flex", gap: 6 }}>
-            <div style={{ width: 48, height: 16, borderRadius: 4, background: "linear-gradient(90deg,#6366f1,#8b5cf6)" }} />
-            <div style={{ width: 48, height: 16, borderRadius: 4, background: "#3f3f46" }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <Eye size={12} style={{ color: "#c084fc" }} />
+            <span style={{ ...label, color: "#a1a1aa" }}>Live Preview</span>
+          </div>
+          <div style={{ display: "flex", gap: 4 }}>
+            <span style={{ height: 7, width: 7, borderRadius: "50%", background: "#f87171" }} />
+            <span style={{ height: 7, width: 7, borderRadius: "50%", background: "#fbbf24" }} />
+            <span style={{ height: 7, width: 7, borderRadius: "50%", background: "#34d399" }} />
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#71717a" }}>
-          <span>Previewing with your data</span>
-          <span style={{ animation: "pc-blink 1s step-end infinite", color: "#a78bfa", fontWeight: 700 }}>|</span>
+        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "14px 12px", marginBottom: 10, border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ width: "62%", height: 8, borderRadius: 3, background: "linear-gradient(90deg,#a78bfa,#f0abfc)", marginBottom: 8 }} />
+          <div style={{ width: "85%", height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)", marginBottom: 5 }} />
+          <div style={{ width: "48%", height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)", marginBottom: 12 }} />
+          <div style={{ display: "flex", gap: 7 }}>
+            <div style={{ width: 56, height: 20, borderRadius: 7, background: "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+            <div style={{ width: 56, height: 20, borderRadius: 7, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)" }} />
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, color: "#a1a1aa" }}>
+          Previewing with your data
+          <span style={{ animation: "pc-blink 1s step-end infinite", color: "#c084fc", fontWeight: 700 }}>▍</span>
         </div>
       </>
     ),
   },
+
+  // ── 4. Pricing ──
   {
     id: "pricing",
-    pos: { top: "34%", right: "0%", width: 200, zIndex: 8 },
+    pos: { top: "31%", right: "-2%", width: 230, zIndex: 9 },
     rotate: -4,
-    depth: 1.3,
+    depth: 1.35,
     float: { dur: 3.4, delay: 450 },
-    card: { background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)", border: "1px solid #fde68a", padding: "14px 14px" },
+    card: { background: "linear-gradient(140deg, #fffbeb 0%, #fef3c7 100%)", border: "1px solid #fde68a", color: "#78350f", padding: "16px 16px" },
     node: (
       <>
-        <div style={{ ...label, fontWeight: 700, color: "#92400e", marginBottom: 10 }}>Pricing</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <span style={{ ...label, color: "#b45309" }}>Pricing</span>
+          <TrendingUp size={13} color="#d97706" />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#78350f" }}>Free</span>
-            <span style={{ fontSize: 11, color: "#a16207" }}>3 sections</span>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>Free</span>
+            <span style={{ fontSize: 11.5, color: "#a16207" }}>3 sections</span>
           </div>
           <div style={{ height: 1, background: "#fde68a" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#78350f" }}>Pro</span>
-            <span style={{ fontSize: 11, color: "#a16207" }}>Unlimited ✨</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 800 }}>
+              <Zap size={11} fill="#d97706" color="#d97706" /> Pro
+            </span>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "#b45309" }}>Unlimited ✨</span>
           </div>
         </div>
-        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
-          <span style={{ fontSize: 9, color: "#a16207" }}>Upgrade</span>
-          <div style={{ width: 32, height: 16, borderRadius: 999, background: "#f59e0b", position: "relative" }}>
-            <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, right: 2, boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
+        <div style={{ marginTop: 13, display: "flex", alignItems: "center", gap: 7, justifyContent: "flex-end" }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#a16207" }}>Upgrade</span>
+          <div style={{ width: 36, height: 18, borderRadius: 999, background: "linear-gradient(90deg,#f59e0b,#d97706)", position: "relative", boxShadow: "0 1px 4px rgba(217,119,6,0.4)" }}>
+            <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, right: 2, boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
           </div>
         </div>
       </>
     ),
   },
-  {
-    id: "sections",
-    pos: { top: "62%", left: "14%", width: 186, zIndex: 4 },
-    rotate: -6,
-    depth: 0.55,
-    float: { dur: 5, delay: 550 },
-    card: { background: "#ffffff", border: "1px solid #e4e4e7", padding: "14px 14px" },
-    node: (
-      <>
-        <div style={{ ...label, color: "#71717a", marginBottom: 10 }}>Your Sections</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          {[
-            { name: "Hero", checked: true },
-            { name: "About", checked: true },
-            { name: "Projects", checked: true },
-            { name: "Testimonials", checked: false },
-          ].map(({ name, checked }) => (
-            <div key={name} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {checked ? (
-                <div style={{ width: 16, height: 16, borderRadius: 4, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Check size={10} color="#fff" strokeWidth={3} />
-                </div>
-              ) : (
-                <Square size={16} color="#d4d4d8" strokeWidth={1.5} />
-              )}
-              <span style={{ fontSize: 12, fontWeight: checked ? 600 : 400, color: checked ? "#18181b" : "#a1a1aa" }}>{name}</span>
-            </div>
-          ))}
-        </div>
-      </>
-    ),
-  },
+
+  // ── 5. Tech stack (dark glass) ──
   {
     id: "stack",
-    pos: { top: "60%", right: "2%", width: 206, zIndex: 3 },
+    pos: { top: "62%", right: "4%", width: 232, zIndex: 4 },
     rotate: 6,
-    depth: 0.45,
+    depth: 0.5,
     float: { dur: 4, delay: 650 },
-    card: { background: "#18181b", color: "#fafafa", padding: "14px 14px" },
+    card: { ...glassDark, padding: "16px 16px", border: "1px solid rgba(255,255,255,0.08)" },
     node: (
       <>
-        <div style={{ ...label, color: "#71717a", marginBottom: 10 }}>Built with</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        <span style={{ ...label, color: "#a1a1aa", display: "block", marginBottom: 12 }}>Built with</span>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {[
-            { name: "Next.js", bg: "#27272a", color: "#fafafa" },
-            { name: "shadcn/ui", bg: "#27272a", color: "#fafafa" },
-            { name: "Gemini AI", bg: "#1e1b4b", color: "#a5b4fc" },
-            { name: "Tailwind", bg: "#042f2e", color: "#5eead4" },
-          ].map(({ name, bg, color }) => (
-            <span key={name} style={{ fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 999, background: bg, color, border: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>
-              {name}
+            { name: "Next.js", bg: "rgba(255,255,255,0.08)", color: "#fafafa" },
+            { name: "shadcn/ui", bg: "rgba(255,255,255,0.08)", color: "#fafafa" },
+            { name: "Gemini AI", bg: "rgba(99,102,241,0.25)", color: "#c7d2fe" },
+            { name: "Tailwind", bg: "rgba(20,184,166,0.22)", color: "#5eead4" },
+            { name: "Drizzle", bg: "rgba(34,197,94,0.2)", color: "#86efac" },
+          ].map((t) => (
+            <span key={t.name} style={{ fontSize: 10.5, fontWeight: 600, padding: "5px 11px", borderRadius: 999, background: t.bg, color: t.color, border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap" }}>
+              {t.name}
             </span>
           ))}
         </div>
       </>
     ),
   },
+
+  // ── 6. Export ──
   {
     id: "export",
-    pos: { top: "82%", left: "30%", width: 220, zIndex: 6 },
-    rotate: 8,
-    depth: 1.0,
+    pos: { top: "67%", left: "12%", width: 252, zIndex: 7 },
+    rotate: 7,
+    depth: 1.05,
     float: { dur: 3.6, delay: 800 },
-    card: { background: "#ffffff", border: "1px solid #e4e4e7", padding: "14px 14px" },
+    card: { ...glassLight, padding: "16px 16px", border: "1px solid rgba(255,255,255,0.6)" },
     node: (
       <>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-          <Download size={12} color="#6366f1" />
-          <span style={{ ...label, color: "#71717a" }}>Export</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
+          <Download size={13} color="#7c3aed" />
+          <span style={{ ...label, color: "#7c3aed" }}>Export</span>
         </div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#52525b" }}>
-            <FileCode size={12} color="#6366f1" />
-            <span>index.tsx</span>
+        <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#52525b" }}>
+            <FileCode size={13} color="#7c3aed" /> index.tsx
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#52525b" }}>
-            <FileText size={12} color="#8b5cf6" />
-            <span>globals.css</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#52525b" }}>
+            <FileText size={13} color="#a855f7" /> globals.css
           </div>
         </div>
         <div style={{
-          fontSize: 11, fontWeight: 600, color: "#fff",
-          background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
-          borderRadius: 8, padding: "7px 0", textAlign: "center",
+          fontSize: 12, fontWeight: 700, color: "#fff",
+          background: "linear-gradient(90deg, #7c3aed, #a855f7)",
+          borderRadius: 12, padding: "9px 0", textAlign: "center",
+          boxShadow: "0 6px 18px -4px rgba(124,58,237,0.5)",
         }}>
           Download as ZIP
         </div>
@@ -332,8 +347,8 @@ export default function PhysicsCardCluster() {
       const ny = ((e.clientY - r.top) / r.height - 0.5) * 2;
       states.forEach((s, i) => {
         if (!s.dragging) {
-          s.tx = nx * 14 * CARDS[i].depth;
-          s.ty = ny * 10 * CARDS[i].depth;
+          s.tx = nx * 20 * CARDS[i].depth;
+          s.ty = ny * 14 * CARDS[i].depth;
         }
       });
       wake();
@@ -413,14 +428,14 @@ export default function PhysicsCardCluster() {
   return (
     <>
       <style>{`
-        @keyframes pc-float { from { transform: translateY(-5px); } to { transform: translateY(5px); } }
+        @keyframes pc-float { from { transform: translateY(-7px); } to { transform: translateY(7px); } }
         @keyframes pc-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         @keyframes pc-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         .pc-cluster {
           position: relative;
           width: 100%;
-          height: 520px;
+          height: 580px;
         }
         .pc-item {
           position: absolute;
@@ -433,35 +448,49 @@ export default function PhysicsCardCluster() {
           .pc-item { cursor: grab; }
           .pc-item.pc-dragging { cursor: grabbing; z-index: 30 !important; }
         }
-        .pc-float {
-          animation: pc-float ease-in-out infinite alternate;
-        }
-        .pc-dragging .pc-float {
-          animation-play-state: paused;
-        }
+        .pc-float { animation: pc-float ease-in-out infinite alternate; }
+        .pc-dragging .pc-float { animation-play-state: paused; }
+
         .pc-card {
-          border-radius: 14px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.06);
+          position: relative;
+          border-radius: 20px;
+          box-shadow:
+            0 28px 70px -18px rgba(76, 29, 149, 0.40),
+            0 12px 32px -12px rgba(0,0,0,0.16),
+            inset 0 1px 0 rgba(255,255,255,0.22);
           transition: box-shadow 0.35s ease;
+        }
+        /* Gradient hairline border that works on any card background */
+        .pc-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          padding: 1px;
+          background: linear-gradient(140deg, rgba(255,255,255,0.7), rgba(255,255,255,0.04) 42%, rgba(168,85,247,0.4));
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
         }
         .pc-item:hover .pc-card,
         .pc-dragging .pc-card {
-          box-shadow: 0 16px 48px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+          box-shadow:
+            0 40px 90px -18px rgba(76, 29, 149, 0.55),
+            0 16px 44px -12px rgba(0,0,0,0.22),
+            inset 0 1px 0 rgba(255,255,255,0.3);
         }
         .pc-hint { display: none; }
         @media (pointer: fine) {
-          .pc-hint {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-          }
+          .pc-hint { display: inline-flex; align-items: center; gap: 6px; }
         }
 
         @media (max-width: 768px) {
-          .pc-cluster { height: 400px; transform: scale(0.72); transform-origin: top center; }
+          .pc-cluster { height: 430px; transform: scale(0.66); transform-origin: top center; }
         }
         @media (max-width: 480px) {
-          .pc-cluster { transform: scale(0.58); }
+          .pc-cluster { transform: scale(0.54); }
         }
       `}</style>
 

@@ -6,8 +6,9 @@ import { registry } from "@/lib/components/registry";
 import { componentMap } from "@/lib/components/map";
 import { demoData } from "@/lib/demo-data";
 import { PortfolioData } from "@/types/portfolio";
-import { saveSelectedComponents, importLocalStorageData, importComponentIds, saveTheme, savePattern } from "@/lib/actions/portfolio";
+import { saveSelectedComponents, importLocalStorageData, importComponentIds, saveTheme, savePattern, savePortfolioData } from "@/lib/actions/portfolio";
 import { generateRandomLayout, generateRandomStyle } from "@/lib/random-theme";
+import SectionEditorModal from "./SectionEditorModal";
 import { useBuilderState } from "@/hooks/useBuilderState";
 import FilterTabs, { FilterTab } from "@/components/library/FilterTabs";
 import SearchBar from "@/components/library/SearchBar";
@@ -25,7 +26,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  GripVertical, X, Plus, Sparkles, Loader2, CheckCircle2, AlertCircle, Zap, Dices, Undo2
+  GripVertical, X, Plus, Sparkles, Loader2, CheckCircle2, AlertCircle, Zap, Dices, Undo2, Pencil
 } from "lucide-react";
 import { getComponentById } from "@/lib/components/registry";
 
@@ -40,7 +41,7 @@ interface Props {
 
 // ─── Sortable component row ───────────────────────────────────────────────────
 
-function SortableRow({ id, onRemove }: { id: string; onRemove: () => void }) {
+function SortableRow({ id, onRemove, onEdit }: { id: string; onRemove: () => void; onEdit: (info: { subcategory: string; name: string }) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const baseId = id.includes(":") ? id.split(":")[0] : id;
   const entry = getComponentById(baseId);
@@ -50,7 +51,7 @@ function SortableRow({ id, onRemove }: { id: string; onRemove: () => void }) {
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "group flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-2.5 py-2 text-sm transition-shadow hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-600",
+        "group flex items-center gap-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-2.5 py-2 text-sm transition-shadow hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-600",
         isDragging && "opacity-60 shadow-lg z-50 ring-2 ring-violet-200 dark:ring-violet-900"
       )}
     >
@@ -58,11 +59,19 @@ function SortableRow({ id, onRemove }: { id: string; onRemove: () => void }) {
         {...attributes}
         {...listeners}
         aria-label={`Reorder ${name}`}
-        className="flex h-8 w-7 items-center justify-center rounded-md text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-violet-500"
+        className="flex h-8 w-6 items-center justify-center rounded-md text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-violet-500"
       >
         <GripVertical className="h-4 w-4" aria-hidden="true" />
       </button>
       <span className="flex-1 truncate text-zinc-700 dark:text-zinc-200 font-medium">{name}</span>
+      <button
+        onClick={() => entry && onEdit({ subcategory: String(entry.subcategory), name })}
+        aria-label={`Edit ${name}`}
+        title="Edit content"
+        className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 dark:text-zinc-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
+      >
+        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
       <button
         onClick={onRemove}
         aria-label={`Remove ${name}`}
@@ -172,8 +181,27 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
     return () => clearTimeout(t);
   }, [undoSnap]);
 
-  // Preview data
-  const portfolioData = (portfolio?.portfolioData as PortfolioData | null) ?? demoData;
+  // Preview data — local state so per-section edits update the preview instantly
+  const [portfolioData, setPortfolioData] = useState<PortfolioData>(
+    (portfolio?.portfolioData as PortfolioData | null) ?? demoData
+  );
+
+  // Per-section content editor
+  const [editingSection, setEditingSection] = useState<{ subcategory: string; name: string } | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const handleSectionSave = async (next: PortfolioData) => {
+    setSavingEdit(true);
+    setPortfolioData(next); // optimistic — preview updates immediately
+    try {
+      await savePortfolioData(next);
+      setEditingSection(null);
+    } catch {
+      // leave the modal open so the user can retry
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -410,7 +438,7 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={componentIds} strategy={verticalListSortingStrategy}>
                   {componentIds.map((id) => (
-                    <SortableRow key={id} id={id} onRemove={() => removeComponent(id)} />
+                    <SortableRow key={id} id={id} onRemove={() => removeComponent(id)} onEdit={setEditingSection} />
                   ))}
                 </SortableContext>
               </DndContext>
@@ -601,6 +629,9 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
                         {comp.tier === "pro" && (
                           <div className="absolute top-2 right-2 bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</div>
                         )}
+                        {comp.isNew && (
+                          <div className="absolute top-2 left-2 bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">✦ NEW</div>
+                        )}
                         {isAdded && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="bg-emerald-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
@@ -668,6 +699,18 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
         />
       )}
       </div>{/* end flex flex-1 overflow-hidden */}
+
+      {/* Per-section content editor */}
+      {editingSection && (
+        <SectionEditorModal
+          subcategory={editingSection.subcategory}
+          componentName={editingSection.name}
+          data={portfolioData}
+          saving={savingEdit}
+          onSave={handleSectionSave}
+          onClose={() => setEditingSection(null)}
+        />
+      )}
 
       {/* Upgrade modal */}
       <UpgradeModal

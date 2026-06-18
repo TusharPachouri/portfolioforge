@@ -215,6 +215,28 @@ body {
   background-position: -50% 0;
 }
 
+/* Hero aurora — slow-rotating conic wash of brand color, heavily blurred */
+.hero-aurora {
+  position: absolute;
+  inset: -25% -15%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg at 58% 42%,
+    rgba(124, 58, 237, 0.20),
+    rgba(217, 70, 239, 0.16),
+    rgba(99, 102, 241, 0.20),
+    rgba(56, 189, 248, 0.10),
+    rgba(168, 85, 247, 0.18),
+    rgba(124, 58, 237, 0.20)
+  );
+  filter: blur(70px);
+  animation: aurora-spin 28s linear infinite;
+}
+@keyframes aurora-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Hero backdrop: dot grid fading out from the top + drifting gradient blobs */
 .hero-dots {
   background-image: radial-gradient(rgba(139, 92, 246, 0.35) 1px, transparent 1px);

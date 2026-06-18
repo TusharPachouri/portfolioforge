@@ -14,6 +14,12 @@ import FooterMinimal from "@/components/sections/FooterMinimal";
 import StatsRow from "@/components/sections/StatsRow";
 import TestimonialsGrid from "@/components/sections/TestimonialsGrid";
 import GalleryMasonry from "@/components/sections/GalleryMasonry";
+import HeroGradient from "@/components/sections/HeroGradient";
+import AboutHighlights from "@/components/sections/AboutHighlights";
+import SkillsCards from "@/components/sections/SkillsCards";
+import ExperienceCards from "@/components/sections/ExperienceCards";
+import ProjectsShowcase from "@/components/sections/ProjectsShowcase";
+import ContactBanner from "@/components/sections/ContactBanner";
 
 type SectionComponent = React.ComponentType<{ data: PortfolioData }>;
 
@@ -34,4 +40,11 @@ export const componentMap: Record<string, SectionComponent> = {
   "stats-row": StatsRow,
   "testimonials-grid": TestimonialsGrid,
   "gallery-masonry": GalleryMasonry,
+  // Newly added (free)
+  "hero-gradient": HeroGradient,
+  "about-highlights": AboutHighlights,
+  "skills-cards": SkillsCards,
+  "experience-cards": ExperienceCards,
+  "projects-showcase": ProjectsShowcase,
+  "contact-banner": ContactBanner,
 };

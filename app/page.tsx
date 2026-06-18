@@ -56,14 +56,20 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {/* Backdrop: soft wash + dot grid + parallax aurora blobs (all compositor-only) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-50/60 via-white to-white pointer-events-none" aria-hidden="true" />
+        {/* Backdrop: soft wash + rotating aurora + dot grid + parallax glow blobs */}
+        <div className="absolute inset-0 bg-gradient-to-b from-violet-50/70 via-white to-white pointer-events-none" aria-hidden="true" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="hero-aurora motion-reduce:hidden" />
+        </div>
         <div className="absolute inset-0 hero-dots pointer-events-none" aria-hidden="true" />
-        <Parallax speed={0.18} className="absolute -top-24 left-1/3 pointer-events-none" aria-hidden="true">
-          <div className="hero-blob w-[520px] h-[380px] rounded-full bg-gradient-to-br from-violet-200/50 to-indigo-200/40 blur-3xl" />
+        <Parallax speed={0.18} className="absolute -top-24 left-1/4 pointer-events-none" aria-hidden="true">
+          <div className="hero-blob w-[560px] h-[420px] rounded-full bg-gradient-to-br from-violet-300/45 to-indigo-300/35 blur-3xl" />
         </Parallax>
-        <Parallax speed={0.1} className="absolute top-16 right-0 pointer-events-none" aria-hidden="true">
-          <div className="hero-blob-2 w-[420px] h-[320px] rounded-full bg-gradient-to-br from-fuchsia-100/50 to-violet-200/40 blur-3xl" />
+        <Parallax speed={0.1} className="absolute top-10 right-0 pointer-events-none" aria-hidden="true">
+          <div className="hero-blob-2 w-[460px] h-[360px] rounded-full bg-gradient-to-br from-fuchsia-300/40 to-violet-300/35 blur-3xl" />
+        </Parallax>
+        <Parallax speed={0.14} className="absolute top-40 left-1/2 pointer-events-none" aria-hidden="true">
+          <div className="hero-blob w-[360px] h-[300px] rounded-full bg-gradient-to-br from-sky-200/35 to-cyan-200/25 blur-3xl" />
         </Parallax>
 
         <div className="relative max-w-6xl mx-auto px-4 pt-24 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">

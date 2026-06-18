@@ -7,6 +7,7 @@ import { useBuilderState } from "@/hooks/useBuilderState";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { saveDetailsAndGenerate } from "@/lib/actions/portfolio";
 import ImageUpload from "@/components/ui/ImageUpload";
+import ResumeImport from "./ResumeImport";
 import { cn } from "@/lib/utils";
 import {
   User, FileText, Wrench, Briefcase, GraduationCap,
@@ -516,6 +517,20 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
     });
   }, [saveRawForm]);
 
+  // Replace the whole form from a parsed résumé, normalizing to valid shape.
+  const fillFromResume = (d: RawUserDetails) => {
+    const normalized: RawUserDetails = {
+      ...emptyForm(),
+      ...d,
+      gallery: d.gallery ?? [],
+      projects: (d.projects ?? []).map((p) => ({ ...p, imageUrl: p.imageUrl ?? "" })),
+    };
+    setForm(normalized);
+    saveRawForm(normalized);
+    setStep(1);
+    showToast("Résumé imported ✓ — review your details, then generate");
+  };
+
   const next = () => setStep((s) => Math.min(s + 1, LAST_STEP));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
@@ -567,8 +582,11 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-zinc-900 mb-1">Personalize your portfolio</h1>
-          <p className="text-sm text-zinc-500">Fill in your details — Gemini AI will structure everything for you</p>
+          <p className="text-sm text-zinc-500">Upload your résumé or fill in your details — AI structures everything for you</p>
         </div>
+
+        {/* Résumé fast-path — only on the first step */}
+        {step === 1 && <ResumeImport onParsed={fillFromResume} />}
 
         {/* Step indicator */}
         <div className="flex items-center gap-1 justify-center mb-8 overflow-x-auto pb-1">

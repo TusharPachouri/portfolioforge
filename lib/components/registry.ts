@@ -32,9 +32,84 @@ export interface ComponentEntry {
   sortOrder: number;
   previewImage?: string;
   variants: number;
+  isNew?: boolean;
 }
 
 export const registry: ComponentEntry[] = [
+  // ── Newest (free) — surfaced at the top of the library ──────────────────────
+  {
+    id: "hero-gradient",
+    name: "Hero — Gradient",
+    category: "section",
+    subcategory: "Hero",
+    description: "Bold hero with a gradient name, accent glow halo and a gradient CTA.",
+    tags: ["hero", "gradient", "bold", "premium"],
+    tier: "free",
+    sortOrder: -6,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "about-highlights",
+    name: "About — Highlights",
+    category: "section",
+    subcategory: "About",
+    description: "Bio paragraphs paired with a grid of highlight cards.",
+    tags: ["about", "highlights", "cards", "bio"],
+    tier: "free",
+    sortOrder: -5,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "skills-cards",
+    name: "Skills — Cards",
+    category: "section",
+    subcategory: "Skills",
+    description: "Skill categories as clean cards with accent headers and chips.",
+    tags: ["skills", "cards", "categories", "grid"],
+    tier: "free",
+    sortOrder: -4,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "experience-cards",
+    name: "Experience — Cards",
+    category: "section",
+    subcategory: "Experience",
+    description: "Work history as a responsive card grid with role, company and period.",
+    tags: ["experience", "cards", "grid", "work history"],
+    tier: "free",
+    sortOrder: -3,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "projects-showcase",
+    name: "Projects — Showcase",
+    category: "section",
+    subcategory: "Projects",
+    description: "A large featured project with image, plus a grid of the rest.",
+    tags: ["projects", "showcase", "featured", "image"],
+    tier: "free",
+    sortOrder: -2,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "contact-banner",
+    name: "Contact — Banner",
+    category: "section",
+    subcategory: "Contact",
+    description: "Bold full-width gradient call-to-action banner with email and socials.",
+    tags: ["contact", "banner", "cta", "gradient"],
+    tier: "free",
+    sortOrder: -1,
+    variants: 1,
+    isNew: true,
+  },
+
   // ── Sections ──────────────────────────────────────────────────────────────
   {
     id: "hero-centered",

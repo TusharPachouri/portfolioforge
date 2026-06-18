@@ -50,6 +50,14 @@ export default function ComponentCard({ component }: Props) {
         </div>
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-zinc-900/0 group-hover:bg-zinc-900/5 transition-colors" />
+        {/* New badge top-left */}
+        {component.isNew && (
+          <div className="absolute top-2.5 left-2.5">
+            <span className="inline-flex items-center gap-1 bg-violet-600 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shadow-sm">
+              ✦ New
+            </span>
+          </div>
+        )}
         {/* Tier badge top-right */}
         <div className="absolute top-2.5 right-2.5">
           <Badge variant={component.tier === "pro" ? "pro" : "free"}>
