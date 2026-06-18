@@ -34,6 +34,7 @@ export default async function AnalyticsPage() {
       analytics={analytics}
       slug={portfolio.slug}
       totalAllTime={portfolio.viewCount}
+      published={portfolio.published}
     />
   );
 }

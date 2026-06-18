@@ -3,13 +3,13 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { portfolios, userDetails, users, userFavourites } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { PortfolioData, RawUserDetails } from "@/types/portfolio";
 import { buildPrompt } from "@/lib/ai/gemini-prompt";
 import { fallbackFormat } from "@/lib/ai/fallback-formatter";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { findUniqueSlug, isReserved } from "@/lib/slug";
+import { isReserved } from "@/lib/slug";
 import { getThemeById } from "@/lib/themes";
 import { getPatternById } from "@/lib/patterns/registry";
 import { validatePatternConfig, PatternConfig } from "@/lib/patterns/types";
@@ -27,6 +27,41 @@ async function getUserPortfolio(userId: string) {
   });
   if (!portfolio) throw new Error("Portfolio not found");
   return portfolio;
+}
+
+// ─── Shared AI generation ─────────────────────────────────────────────────────
+// Single source of truth for turning raw form data into structured portfolio
+// JSON. Tries Gemini (twice, second pass stricter), then a deterministic
+// fallback formatter that always succeeds — so generation never hard-fails.
+
+async function generatePortfolioData(
+  raw: RawUserDetails,
+): Promise<{ data: PortfolioData; source: string }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { data: fallbackFormat(raw), source: "fallback" };
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const prompt =
+        attempt === 0
+          ? buildPrompt(raw)
+          : buildPrompt(raw) + "\n\nIMPORTANT: Respond with ONLY valid JSON, no markdown.";
+      const text = (await model.generateContent(prompt)).response
+        .text()
+        .trim()
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/, "")
+        .trim();
+      return { data: JSON.parse(text) as PortfolioData, source: attempt === 0 ? "gemini" : "gemini-retry" };
+    } catch {
+      // try the stricter prompt, then fall through to the deterministic formatter
+    }
+  }
+  return { data: fallbackFormat(raw), source: "fallback" };
 }
 
 // ─── Component order ──────────────────────────────────────────────────────────
@@ -93,7 +128,43 @@ export async function updateUserDetails(raw: RawUserDetails) {
   revalidatePath("/dashboard");
 }
 
-// ─── AI regeneration ──────────────────────────────────────────────────────────
+// ─── Save details + generate + persist, in one round-trip ─────────────────────
+// Used by the /personalize editor for signed-in users: writes the raw form,
+// generates structured portfolio data, saves it to the live portfolio, and
+// revalidates the public page so changes show up immediately.
+
+export async function saveDetailsAndGenerate(
+  raw: RawUserDetails,
+): Promise<{ data: PortfolioData; source: string }> {
+  const user = await requireAuth();
+
+  // 1. Persist the raw form
+  await db.insert(userDetails)
+    .values({ userId: user.id, rawData: raw })
+    .onConflictDoUpdate({
+      target: userDetails.userId,
+      set: { rawData: raw, updatedAt: new Date() },
+    });
+
+  // 2. Generate structured data
+  const { data, source } = await generatePortfolioData(raw);
+
+  // 3. Save to the live portfolio + bump generation stats
+  const portfolio = await getUserPortfolio(user.id);
+  await db.update(portfolios)
+    .set({ portfolioData: data, updatedAt: new Date() })
+    .where(eq(portfolios.id, portfolio.id));
+  await db.update(userDetails)
+    .set({ lastGeneratedAt: new Date(), aiGenerationCount: sql`${userDetails.aiGenerationCount} + 1` })
+    .where(eq(userDetails.userId, user.id));
+
+  revalidatePath(`/u/${portfolio.slug}`);
+  revalidatePath("/dashboard");
+
+  return { data, source };
+}
+
+// ─── AI regeneration (uses already-saved details) ─────────────────────────────
 
 export async function regeneratePortfolio(): Promise<{ data: PortfolioData; source: string }> {
   const user = await requireAuth();
@@ -104,34 +175,10 @@ export async function regeneratePortfolio(): Promise<{ data: PortfolioData; sour
 
   if (!details?.rawData) throw new Error("No user details found. Fill in your details first.");
 
-  const raw = details.rawData as RawUserDetails;
-  let result: PortfolioData;
-  let source = "fallback";
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (apiKey) {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const prompt = attempt === 0
-          ? buildPrompt(raw)
-          : buildPrompt(raw) + "\n\nIMPORTANT: Respond with ONLY valid JSON, no markdown.";
-        const res = await model.generateContent(prompt);
-        const text = res.response.text().trim()
-          .replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-        result = JSON.parse(text) as PortfolioData;
-        source = attempt === 0 ? "gemini" : "gemini-retry";
-        break;
-      } catch { /* fall through */ }
-    }
-    result ??= fallbackFormat(raw);
-  } else {
-    result = fallbackFormat(raw);
-  }
+  const { data, source } = await generatePortfolioData(details.rawData as RawUserDetails);
 
   await db.update(portfolios)
-    .set({ portfolioData: result, updatedAt: new Date() })
+    .set({ portfolioData: data, updatedAt: new Date() })
     .where(eq(portfolios.id, portfolio.id));
   await db.update(userDetails)
     .set({ lastGeneratedAt: new Date(), aiGenerationCount: (details.aiGenerationCount ?? 0) + 1 })
@@ -140,7 +187,7 @@ export async function regeneratePortfolio(): Promise<{ data: PortfolioData; sour
   revalidatePath(`/u/${portfolio.slug}`);
   revalidatePath("/dashboard");
 
-  return { data: result, source };
+  return { data, source };
 }
 
 // ─── Import localStorage data on sign-in ──────────────────────────────────────
@@ -156,24 +203,8 @@ export async function importLocalStorageData(raw: RawUserDetails, componentIds: 
       set: { rawData: raw, updatedAt: new Date() },
     });
 
-  // Run AI
-  let portfolioData: PortfolioData;
-  let source = "fallback";
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (apiKey) {
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const text = (await model.generateContent(buildPrompt(raw))).response.text().trim()
-        .replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-      portfolioData = JSON.parse(text) as PortfolioData;
-      source = "gemini";
-    } catch {
-      portfolioData = fallbackFormat(raw);
-    }
-  } else {
-    portfolioData = fallbackFormat(raw);
-  }
+  // Run AI (shared helper — Gemini with deterministic fallback)
+  const { data: portfolioData, source } = await generatePortfolioData(raw);
 
   const portfolio = await getUserPortfolio(user.id);
   await db.update(portfolios)

@@ -1,0 +1,40 @@
+{
+  "counts": [
+    {
+      "slug": "tushar-pachouri",
+      "views": 28
+    },
+    {
+      "slug": "claude-test-demo",
+      "views": 5
+    },
+    {
+      "slug": "ankit",
+      "views": 4
+    },
+    {
+      "slug": "tushar123",
+      "views": 3
+    }
+  ],
+  "typeinfo": [
+    {
+      "d_date": "2026-06-17T00:00:00.000Z",
+      "d_date_type": "[object Date]",
+      "d_str": "2026-06-17",
+      "d_str_type": "string"
+    },
+    {
+      "d_date": "2026-06-17T00:00:00.000Z",
+      "d_date_type": "[object Date]",
+      "d_str": "2026-06-17",
+      "d_str_type": "string"
+    },
+    {
+      "d_date": "2026-06-17T00:00:00.000Z",
+      "d_date_type": "[object Date]",
+      "d_str": "2026-06-17",
+      "d_str_type": "string"
+    }
+  ]
+}

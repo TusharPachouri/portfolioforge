@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { portfolioViews, portfolios } from "./db/schema";
-import { eq, gte, sql, desc, count } from "drizzle-orm";
+import { eq, sql, desc, count } from "drizzle-orm";
 
 const BOT_UA_PATTERNS = [
   /bot/i, /crawl/i, /spider/i, /slurp/i, /googlebot/i,
@@ -69,17 +69,20 @@ export async function getAnalytics(portfolioId: string) {
       .orderBy(desc(count()))
       .limit(10),
 
-    // Daily views for chart (last 30 days)
+    // Daily views for chart (last 30 days).
+    // to_char(...) returns a plain 'YYYY-MM-DD' string (forced to UTC) so it
+    // matches the client's date keys — DATE() comes back as a JS Date which
+    // never === the string key, silently zeroing the chart.
     db.select({
-      day: sql<string>`DATE(${portfolioViews.viewedAt})`.as("day"),
+      day: sql<string>`to_char(${portfolioViews.viewedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`.as("day"),
       count: count(),
     })
       .from(portfolioViews)
       .where(
         sql`${portfolioViews.portfolioId} = ${portfolioId} AND ${portfolioViews.viewedAt} >= ${thirtyDaysAgo}`
       )
-      .groupBy(sql`DATE(${portfolioViews.viewedAt})`)
-      .orderBy(sql`DATE(${portfolioViews.viewedAt})`),
+      .groupBy(sql`to_char(${portfolioViews.viewedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`)
+      .orderBy(sql`to_char(${portfolioViews.viewedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`),
   ]);
 
   return { totalViews, recentViews, topReferrers, topCountries, dailyViews };

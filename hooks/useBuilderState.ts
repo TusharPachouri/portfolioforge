@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { BuilderState, PortfolioData, RawUserDetails } from "@/types/portfolio";
 
 const KEY = "pf_builder";
-const MAX_FREE_GENERATIONS = 3;
 
 const DEFAULT_STATE: BuilderState = {
   selectedComponentIds: [],
@@ -33,7 +32,11 @@ function write(state: BuilderState) {
 export function useBuilderState() {
   const [state, setState] = useState<BuilderState>(DEFAULT_STATE);
 
+  // Hydrate from localStorage after mount on purpose: the first render must
+  // match the server (DEFAULT_STATE) to avoid a hydration mismatch, then we
+  // load the persisted state on the client.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(read());
   }, []);
 
@@ -95,8 +98,6 @@ export function useBuilderState() {
     [update]
   );
 
-  const canGenerate = state.generationCount < MAX_FREE_GENERATIONS;
-
   return {
     state,
     addComponent,
@@ -105,7 +106,5 @@ export function useBuilderState() {
     setPortfolioData,
     saveRawForm,
     clearBuilder,
-    canGenerate,
-    MAX_FREE_GENERATIONS,
   };
 }

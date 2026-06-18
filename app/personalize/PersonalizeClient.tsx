@@ -5,12 +5,25 @@ import { useRouter } from "next/navigation";
 import { RawUserDetails, RawExperience, RawEducation, RawProject } from "@/types/portfolio";
 import { useBuilderState } from "@/hooks/useBuilderState";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { saveDetailsAndGenerate } from "@/lib/actions/portfolio";
 import { cn } from "@/lib/utils";
 import {
   User, FileText, Wrench, Briefcase, GraduationCap,
   FolderOpen, Link2, CheckCircle2, Plus, Trash2,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle
+  ChevronLeft, ChevronRight, Loader2, AlertCircle, Sparkles
 } from "lucide-react";
+
+// Read any in-progress draft an anonymous visitor left in localStorage.
+function readLocalForm(): RawUserDetails | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("pf_builder");
+    if (!raw) return null;
+    return (JSON.parse(raw) as { rawFormData?: RawUserDetails }).rawFormData ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // ─── Step definitions ──────────────────────────────────────────────────────────
 
@@ -348,8 +361,13 @@ function Step7({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
   );
 }
 
-function Step8({ form, generating, error, canGenerate, generationCount, maxGenerations, onGenerate }:
-  { form: RawUserDetails; generating: boolean; error: string | null; canGenerate: boolean; generationCount: number; maxGenerations: number; onGenerate: () => void }) {
+function Step8({ form, generating, error, isAuthed, onGenerate }:
+  { form: RawUserDetails; generating: boolean; error: string | null; isAuthed: boolean; onGenerate: () => void }) {
+  const missing: string[] = [];
+  if (!form.name.trim()) missing.push("name");
+  if (!form.bio.trim()) missing.push("bio");
+  const incomplete = missing.length > 0;
+
   return (
     <div className="space-y-6">
       <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-5 space-y-3 text-sm">
@@ -363,36 +381,38 @@ function Step8({ form, generating, error, canGenerate, generationCount, maxGener
         <SummaryRow label="Email" value={form.socials.email} />
       </div>
 
-      {!canGenerate && (
+      {incomplete && (
         <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
           <div>
-            <p className="font-medium">Free generation limit reached</p>
-            <p className="text-amber-700 mt-0.5">You&apos;ve used {generationCount}/{maxGenerations} free generations. Sign in to continue.</p>
+            <p className="font-medium">Add your {missing.join(" and ")} for a better result</p>
+            <p className="text-amber-700 mt-0.5">You can still generate — the AI will fill in sensible placeholders.</p>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+        <div role="alert" className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
           <p>{error}</p>
         </div>
       )}
 
       <button
         onClick={onGenerate}
-        disabled={generating || !canGenerate}
-        className="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white py-3.5 rounded-xl font-semibold hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        disabled={generating}
+        className="press-scale w-full flex items-center justify-center gap-2 bg-zinc-900 text-white py-3.5 rounded-xl font-semibold hover:bg-zinc-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
       >
         {generating ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Generating with Gemini AI...</>
+          <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> {isAuthed ? "Generating & saving…" : "Generating with Gemini AI…"}</>
         ) : (
-          <><CheckCircle2 className="h-4 w-4" /> Generate Portfolio Data with AI</>
+          <><Sparkles className="h-4 w-4" aria-hidden="true" /> {isAuthed ? "Generate & Save to Portfolio" : "Generate Portfolio Data with AI"}</>
         )}
       </button>
       <p className="text-center text-xs text-zinc-400">
-        {generationCount}/{maxGenerations} free generations used · Your data never leaves your browser except for the AI call
+        {isAuthed
+          ? "Saves to your account and updates your live portfolio instantly."
+          : "Generate as many times as you like · Your data never leaves your browser except for the AI call."}
       </p>
     </div>
   );
@@ -409,15 +429,19 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export default function PersonalizeClient() {
+interface Props {
+  isAuthed: boolean;
+  initialData: RawUserDetails | null;
+}
+
+export default function PersonalizeClient({ isAuthed, initialData }: Props) {
   const router = useRouter();
-  const { state, saveRawForm, setPortfolioData, canGenerate, MAX_FREE_GENERATIONS } = useBuilderState();
+  const { saveRawForm, setPortfolioData } = useBuilderState();
   const { setPortfolioData: setContext, showToast } = usePortfolio();
 
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<RawUserDetails>(() => {
-    return state.rawFormData ?? emptyForm();
-  });
+  // Prefer saved DB details (signed-in), then any local draft, then a blank form.
+  const [form, setForm] = useState<RawUserDetails>(() => initialData ?? readLocalForm() ?? emptyForm());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -436,21 +460,35 @@ export default function PersonalizeClient() {
     setGenerating(true);
     setError(null);
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error("Server error");
-      const { data, source } = await res.json();
-      setPortfolioData(data, form);
-      setContext(data, form);
-      showToast(
-        source === "gemini" || source === "gemini-retry"
-          ? "Preview updated with your data ✓"
-          : "Preview updated (AI unavailable — used smart formatter)"
-      );
-      router.push("/preview");
+      if (isAuthed) {
+        // Persist details + generated portfolio straight to the DB, then show it live.
+        const { data, source } = await saveDetailsAndGenerate(form);
+        setContext(data, form);
+        showToast(
+          source.startsWith("gemini")
+            ? "Saved & generated with Gemini AI ✓"
+            : "Saved to your portfolio (used smart formatter)"
+        );
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        // Anonymous: generate a preview and keep it in localStorage.
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error("Server error");
+        const { data, source } = await res.json();
+        setPortfolioData(data, form);
+        setContext(data, form);
+        showToast(
+          source === "gemini" || source === "gemini-retry"
+            ? "Preview updated with your data ✓"
+            : "Preview updated (AI unavailable — used smart formatter)"
+        );
+        router.push("/preview");
+      }
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -511,9 +549,7 @@ export default function PersonalizeClient() {
               form={form}
               generating={generating}
               error={error}
-              canGenerate={canGenerate}
-              generationCount={state.generationCount}
-              maxGenerations={MAX_FREE_GENERATIONS}
+              isAuthed={isAuthed}
               onGenerate={generate}
             />
           )}
