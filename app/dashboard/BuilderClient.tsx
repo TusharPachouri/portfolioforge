@@ -342,6 +342,9 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
     return c.name.toLowerCase().includes(q) || c.tags.some((t) => t.includes(q));
   });
 
+  // Mobile: show one pane at a time (the two panels can't fit side-by-side)
+  const [mobileView, setMobileView] = useState<"preview" | "sections">("preview");
+
   return (
     <div className="flex h-full flex-col">
       {/* Random theme undo toast */}
@@ -404,9 +407,29 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
         </div>
       )}
 
+      {/* Mobile pane toggle */}
+      <div className="md:hidden flex items-center gap-1 p-1 mx-3 mt-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
+        {(["preview", "sections"] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setMobileView(v)}
+            aria-pressed={mobileView === v}
+            className={cn(
+              "flex-1 py-2 text-sm font-semibold rounded-lg transition-colors cursor-pointer",
+              mobileView === v ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm" : "text-zinc-500 dark:text-zinc-400"
+            )}
+          >
+            {v === "preview" ? "Preview" : `Sections (${componentIds.length})`}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
       {/* Left panel — component list */}
-      <div className="w-64 md:w-72 shrink-0 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col">
+      <div className={cn(
+        "w-full md:w-72 shrink-0 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-col md:flex",
+        mobileView === "sections" ? "flex" : "hidden"
+      )}>
         <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h2 className="font-semibold text-zinc-900 dark:text-white text-sm mb-0.5">My Components</h2>
@@ -455,7 +478,10 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
       </div>
 
       {/* Center — live preview */}
-      <div className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950">
+      <div className={cn(
+        "flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 md:block",
+        mobileView === "preview" ? "block" : "hidden"
+      )}>
         <div className="p-4">
           {/* Status bar */}
           <div className="flex items-center justify-between gap-3 mb-4">

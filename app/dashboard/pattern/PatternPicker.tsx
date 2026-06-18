@@ -147,9 +147,9 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Pattern grid */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {filtered.map((pattern) => {
               const isSelected = selectedId === pattern.id;
@@ -227,7 +227,7 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
 
         {/* Customization panel */}
         {selectedPattern && (
-          <div className="w-72 shrink-0">
+          <div className="w-full lg:w-72 shrink-0">
             {/* Live preview */}
             <div
               className="relative h-[280px] rounded-xl overflow-hidden mb-4 shadow-inner"
