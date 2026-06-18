@@ -46,7 +46,7 @@ const STEPS = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       {/* Keep revealed content visible when JavaScript is unavailable */}
       <noscript>
         <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>

@@ -49,7 +49,7 @@ export default function PatternsGallery() {
 
       {/* Tabs + Search */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-        <div className="flex items-center gap-1 p-1 bg-zinc-100 rounded-xl overflow-x-auto max-w-full shrink-0">
+        <div className="flex items-center gap-1 p-1 bg-zinc-100 rounded-xl flex-wrap max-w-full shrink-0">
           {TABS.map((tab) => (
             <button
               key={tab.id}

@@ -82,7 +82,7 @@ const CARDS: CardSpec[] = [
             </span>
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>Tushar M.</div>
+            <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>Tushar P.</div>
             <div style={{ fontSize: 10.5, opacity: 0.75 }}>Product Engineer · SF</div>
           </div>
         </div>
@@ -487,10 +487,10 @@ export default function PhysicsCardCluster() {
         }
 
         @media (max-width: 768px) {
-          .pc-cluster { height: 430px; transform: scale(0.66); transform-origin: top center; }
+          .pc-cluster { height: 480px; transform: scale(0.85); transform-origin: top center; }
         }
         @media (max-width: 480px) {
-          .pc-cluster { transform: scale(0.54); }
+          .pc-cluster { height: 430px; transform: scale(0.75); }
         }
       `}</style>
 

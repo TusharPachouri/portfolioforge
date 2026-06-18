@@ -45,13 +45,9 @@ interface CodeModalState {
   css: string;
 }
 
-// Strip opacity/mixBlendMode from render() output so the page-level overlay
-// controls them — capped low enough that text contrast survives underneath.
-function overlayStyle(s: React.CSSProperties): React.CSSProperties {
-  const bg = { ...s };
-  delete bg.opacity;
-  delete bg.mixBlendMode;
-  return { ...bg, opacity: 0.45, mixBlendMode: "multiply" };
+// We pass the pattern style directly to use it as a true background.
+function bgStyle(s: React.CSSProperties): React.CSSProperties {
+  return { ...s };
 }
 
 export default function LibraryShowcase() {
@@ -75,12 +71,12 @@ export default function LibraryShowcase() {
 
   return (
     <section className="max-w-5xl mx-auto px-4 py-20">
-      {/* Page-level theme preview overlay (sits above section backgrounds, below the navbar) */}
+      {/* Page-level theme preview background (sits behind everything) */}
       {activePattern && (
         <div
           aria-hidden="true"
-          className="fixed inset-0 pointer-events-none z-30 motion-safe:transition-opacity motion-safe:duration-700"
-          style={overlayStyle(activePattern.style)}
+          className="fixed inset-0 pointer-events-none z-[-1] motion-safe:transition-opacity motion-safe:duration-700"
+          style={activePattern.style}
         />
       )}
 
@@ -142,7 +138,7 @@ export default function LibraryShowcase() {
 
       {libraryView === "components" && (
         <>
-          <div className="flex items-center gap-1 p-1 bg-zinc-100 rounded-lg w-fit max-w-full mx-auto mb-8 overflow-x-auto">
+          <div className="flex items-center justify-center gap-1 p-1 bg-zinc-100 rounded-lg w-fit max-w-full mx-auto mb-8 flex-wrap">
             {COMPONENT_TABS.map((tab) => (
               <button
                 key={tab}
@@ -207,7 +203,7 @@ export default function LibraryShowcase() {
 
       {libraryView === "patterns" && (
         <>
-          <div className="flex items-center gap-1 p-1 bg-zinc-100 rounded-xl w-fit max-w-full mx-auto mb-4 overflow-x-auto">
+          <div className="flex items-center justify-center gap-1 p-1 bg-zinc-100 rounded-xl w-fit max-w-full mx-auto mb-4 flex-wrap">
             {PATTERN_TABS.map((tab) => (
               <button
                 key={tab.id}

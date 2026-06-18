@@ -182,28 +182,33 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
             </Link>
           </div>
 
-          {/* Public URL (sm+) */}
-          <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
+          {/* Public URL */}
+          <div className="flex-1 flex items-center justify-center gap-1 sm:gap-2 min-w-0 mx-1 sm:mx-0">
             {publicUrl && (
-              <div className="hidden sm:flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full pl-3 pr-1.5 py-1 max-w-xs w-full">
-                <Globe className="h-3.5 w-3.5 text-zinc-400 shrink-0" aria-hidden="true" />
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">portfolioforge.dev{publicUrl}</span>
-                <button
-                  onClick={copyUrl}
-                  aria-label={copied ? "Copied" : "Copy public URL"}
-                  className="ml-auto shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
-                </button>
-                <a
-                  href={publicUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Open public portfolio in a new tab"
-                  className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                </a>
+              <div className="flex items-center gap-1 sm:gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full pl-2 sm:pl-3 pr-1 sm:pr-1.5 py-1 max-w-xs w-full">
+                <Globe className="hidden sm:block h-3.5 w-3.5 text-zinc-400 shrink-0" aria-hidden="true" />
+                <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 truncate flex-1 min-w-0 text-left">
+                  <span className="hidden sm:inline">portfolioforge.dev</span>
+                  {publicUrl}
+                </span>
+                <div className="ml-auto flex items-center shrink-0">
+                  <button
+                    onClick={copyUrl}
+                    aria-label={copied ? "Copied" : "Copy public URL"}
+                    className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                  >
+                    {copied ? <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500" aria-hidden="true" /> : <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />}
+                  </button>
+                  <a
+                    href={publicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open public portfolio in a new tab"
+                    className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
+                  </a>
+                </div>
               </div>
             )}
           </div>

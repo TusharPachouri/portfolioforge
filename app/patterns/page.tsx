@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function PatternsPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <PatternsGallery />
     </div>

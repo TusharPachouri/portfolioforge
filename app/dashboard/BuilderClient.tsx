@@ -68,14 +68,14 @@ function SortableRow({ id, onRemove, onEdit }: { id: string; onRemove: () => voi
         onClick={() => entry && onEdit({ subcategory: String(entry.subcategory), name })}
         aria-label={`Edit ${name}`}
         title="Edit content"
-        className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 dark:text-zinc-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
+        className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 dark:text-zinc-500 opacity-100 md:opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
       >
         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
       <button
         onClick={onRemove}
         aria-label={`Remove ${name}`}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
+        className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 dark:text-zinc-600 opacity-100 md:opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-violet-500"
       >
         <X className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
