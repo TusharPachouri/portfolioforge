@@ -42,7 +42,9 @@ export function fallbackFormat(raw: RawUserDetails): PortfolioData {
       liveUrl: p.liveUrl,
       featured: p.featured,
       role: "Developer",
+      imageUrl: p.imageUrl || "",
     })),
+    gallery: (raw.gallery ?? []).filter((g) => g.imageUrl),
     experience: raw.experience.map((e) => ({
       company: e.company,
       role: e.role,

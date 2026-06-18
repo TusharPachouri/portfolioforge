@@ -50,24 +50,22 @@ export default function SettingsClient({ currentSlug, currentAvatar, userEmail, 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) { showToast("File must be under 2MB", "error"); return; }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      showToast("Only JPG, PNG and WebP allowed", "error"); return;
+    if (file.size > 5 * 1024 * 1024) { showToast("File must be under 5MB", "error"); return; }
+    if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
+      showToast("Only JPG, PNG, WebP and AVIF allowed", "error"); return;
     }
 
     setUploading(true);
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: file.type, size: file.size }),
-      });
-      if (!res.ok) { const e = await res.json(); showToast(e.error || "Upload failed", "error"); return; }
+      const body = new FormData();
+      body.append("file", file);
+      body.append("kind", "avatar");
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) { showToast(data?.error || "Upload failed", "error"); return; }
 
-      const { uploadUrl, publicUrl } = await res.json();
-      await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-      await updateAvatarUrl(publicUrl);
-      setAvatarUrl(publicUrl);
+      await updateAvatarUrl(data.url);
+      setAvatarUrl(data.url);
       showToast("Avatar updated ✓");
       router.refresh();
     } catch {
@@ -103,8 +101,8 @@ export default function SettingsClient({ currentSlug, currentAvatar, userEmail, 
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
               {uploading ? "Uploading..." : "Upload photo"}
             </button>
-            <p className="text-xs text-zinc-400 mt-1">JPG, PNG or WebP · max 2MB</p>
-            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
+            <p className="text-xs text-zinc-400 mt-1">JPG, PNG, WebP or AVIF · max 5MB</p>
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleFileUpload} />
           </div>
         </div>
       </div>

@@ -2,8 +2,9 @@
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { portfolios, userDetails, users, userFavourites } from "@/lib/db/schema";
+import { portfolios, userDetails, users, userFavourites, userImages } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { getCloudinary } from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
 import { PortfolioData, RawUserDetails } from "@/types/portfolio";
 import { buildPrompt } from "@/lib/ai/gemini-prompt";
@@ -343,4 +344,29 @@ export async function getFavourites(): Promise<string[]> {
     where: eq(userFavourites.userId, user.id),
   });
   return favs.map((f) => f.patternId);
+}
+
+// ─── Uploaded images ──────────────────────────────────────────────────────────
+
+/** Delete an uploaded image from Cloudinary + the ledger (owner only). */
+export async function deleteImage(publicId: string): Promise<{ ok: boolean }> {
+  const user = await requireAuth();
+
+  const image = await db.query.userImages.findFirst({
+    where: and(eq(userImages.publicId, publicId), eq(userImages.userId, user.id)),
+  });
+  if (!image) return { ok: false };
+
+  const cloud = getCloudinary();
+  if (cloud) {
+    try {
+      await cloud.uploader.destroy(publicId, { resource_type: "image" });
+    } catch {
+      // Cloudinary delete failed — still drop the ledger row so the UI stays consistent
+    }
+  }
+
+  await db.delete(userImages)
+    .where(and(eq(userImages.publicId, publicId), eq(userImages.userId, user.id)));
+  return { ok: true };
 }

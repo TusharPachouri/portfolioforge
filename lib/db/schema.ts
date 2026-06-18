@@ -121,6 +121,20 @@ export const portfolioViews = pgTable("portfolio_views", {
   viewedAt: timestamp("viewed_at", { mode: "date" }).notNull().defaultNow(),
 });
 
+// ─── Uploaded images (Cloudinary) ─────────────────────────────────────────────
+
+export const userImages = pgTable("user_images", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  publicId: text("public_id").notNull().unique(),
+  kind: text("kind", { enum: ["avatar", "project", "gallery", "other"] }).notNull().default("other"),
+  width: integer("width"),
+  height: integer("height"),
+  bytes: integer("bytes"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
 // ─── Stripe: Idempotency ──────────────────────────────────────────────────────
 
 export const processedEvents = pgTable("processed_events", {
@@ -136,3 +150,4 @@ export type UserDetails = typeof userDetails.$inferSelect;
 export type UserFavourite = typeof userFavourites.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type PortfolioView = typeof portfolioViews.$inferSelect;
+export type UserImage = typeof userImages.$inferSelect;

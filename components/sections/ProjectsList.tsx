@@ -10,6 +10,10 @@ export default function ProjectsList({ data }: Props) {
       <div className="divide-y" style={{ borderColor: 'var(--pf-card-border)' }}>
         {data.projects.map((project) => (
           <div key={project.name} className="py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            {project.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={project.imageUrl} alt={project.name} loading="lazy" className="w-full sm:w-32 sm:h-20 object-cover shrink-0" style={{ borderRadius: 'calc(var(--pf-radius) * 0.6)' }} />
+            )}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold" style={{ color: 'var(--pf-fg)' }}>{project.name}</h3>

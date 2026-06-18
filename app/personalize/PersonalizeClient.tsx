@@ -2,15 +2,16 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { RawUserDetails, RawExperience, RawEducation, RawProject } from "@/types/portfolio";
+import { RawUserDetails, RawExperience, RawEducation, RawProject, GalleryImage } from "@/types/portfolio";
 import { useBuilderState } from "@/hooks/useBuilderState";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { saveDetailsAndGenerate } from "@/lib/actions/portfolio";
+import ImageUpload from "@/components/ui/ImageUpload";
 import { cn } from "@/lib/utils";
 import {
   User, FileText, Wrench, Briefcase, GraduationCap,
   FolderOpen, Link2, CheckCircle2, Plus, Trash2,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle, Sparkles
+  ChevronLeft, ChevronRight, Loader2, AlertCircle, Sparkles, Images
 } from "lucide-react";
 
 // Read any in-progress draft an anonymous visitor left in localStorage.
@@ -34,13 +35,16 @@ const STEPS = [
   { id: 4, label: "Experience", icon: Briefcase },
   { id: 5, label: "Education", icon: GraduationCap },
   { id: 6, label: "Projects", icon: FolderOpen },
-  { id: 7, label: "Socials", icon: Link2 },
-  { id: 8, label: "Generate", icon: CheckCircle2 },
+  { id: 7, label: "Gallery", icon: Images },
+  { id: 8, label: "Socials", icon: Link2 },
+  { id: 9, label: "Generate", icon: CheckCircle2 },
 ];
+const LAST_STEP = STEPS.length; // 9
 
 const EMPTY_EXP: RawExperience = { company: "", role: "", period: "", description: "" };
 const EMPTY_EDU: RawEducation = { school: "", degree: "", period: "", notes: "" };
-const EMPTY_PROJ: RawProject = { name: "", description: "", techStack: [], repoUrl: "", liveUrl: "", featured: false };
+const EMPTY_PROJ: RawProject = { name: "", description: "", techStack: [], repoUrl: "", liveUrl: "", featured: false, imageUrl: "" };
+const EMPTY_GALLERY: GalleryImage = { imageUrl: "", caption: "" };
 
 function emptyForm(): RawUserDetails {
   return {
@@ -51,6 +55,7 @@ function emptyForm(): RawUserDetails {
     experience: [{ ...EMPTY_EXP }],
     education: [{ ...EMPTY_EDU }],
     projects: [{ ...EMPTY_PROJ }],
+    gallery: [],
     socials: { github: "", linkedin: "", twitter: "", website: "", email: "" },
   };
 }
@@ -105,8 +110,17 @@ function Step1({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
       <Field label="Location">
         <TextInput value={form.location} onChange={(v) => set({ location: v })} placeholder="San Francisco, CA" />
       </Field>
-      <Field label="Avatar URL" hint="Paste a public image URL. File upload coming in Phase 3.">
-        <TextInput value={form.avatarUrl} onChange={(v) => set({ avatarUrl: v })} placeholder="https://..." />
+      <Field label="Avatar" hint="Upload a photo, or paste an image URL below.">
+        <div className="max-w-[180px]">
+          <ImageUpload value={form.avatarUrl} onChange={(v) => set({ avatarUrl: v })} kind="avatar" aspect="square" />
+        </div>
+        <input
+          type="url"
+          value={form.avatarUrl}
+          onChange={(e) => set({ avatarUrl: e.target.value })}
+          placeholder="https://… (optional)"
+          className="mt-2 w-full h-9 px-3 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-white"
+        />
       </Field>
       <Field label="I am a...">
         <div className="flex gap-3">
@@ -311,6 +325,9 @@ function Step6({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
             </div>
           </div>
           <Field label="Project Name"><TextInput value={proj.name} onChange={(v) => update(i, "name", v)} placeholder="My Awesome Project" /></Field>
+          <Field label="Cover Image" hint="Optional — a screenshot or banner for this project.">
+            <ImageUpload value={proj.imageUrl} onChange={(v) => update(i, "imageUrl", v)} kind="project" aspect="video" />
+          </Field>
           <Field label="Description" hint="What problem does it solve? Gemini will sharpen this.">
             <Textarea value={proj.description} onChange={(v) => update(i, "description", v)} placeholder="Describe the project, its purpose and your technical approach..." rows={3} />
           </Field>
@@ -347,6 +364,41 @@ function Step6({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
   );
 }
 
+function StepGallery({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
+  const update = (i: number, field: keyof GalleryImage, value: string) => {
+    set({ gallery: form.gallery.map((g, idx) => (idx === i ? { ...g, [field]: value } : g)) });
+  };
+  const add = () => set({ gallery: [...form.gallery, { ...EMPTY_GALLERY }] });
+  const remove = (i: number) => set({ gallery: form.gallery.filter((_, idx) => idx !== i) });
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-zinc-500">
+        Add images for a gallery section — screenshots, designs, talks, anything visual. Optional.
+      </p>
+      {form.gallery.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {form.gallery.map((g, i) => (
+            <div key={i} className="border border-zinc-100 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Image {i + 1}</span>
+                <button onClick={() => remove(i)} className="text-zinc-300 hover:text-red-400 transition-colors cursor-pointer">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <ImageUpload value={g.imageUrl} onChange={(v) => update(i, "imageUrl", v)} kind="gallery" aspect="video" />
+              <TextInput value={g.caption} onChange={(v) => update(i, "caption", v)} placeholder="Caption (optional)" />
+            </div>
+          ))}
+        </div>
+      )}
+      <button onClick={add} className="inline-flex items-center gap-2 text-sm text-zinc-600 border border-dashed border-zinc-300 px-4 py-2.5 rounded-xl hover:border-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer w-full justify-center">
+        <Plus className="h-4 w-4" /> Add gallery image
+      </button>
+    </div>
+  );
+}
+
 function Step7({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
   const s = form.socials;
   const upd = (field: keyof typeof s, value: string) => set({ socials: { ...s, [field]: value } });
@@ -378,6 +430,7 @@ function Step8({ form, generating, error, isAuthed, onGenerate }:
         <SummaryRow label="Experience" value={`${form.experience.filter(e => e.company).length} position(s)`} />
         <SummaryRow label="Education" value={`${form.education.filter(e => e.school).length} institution(s)`} />
         <SummaryRow label="Projects" value={`${form.projects.filter(p => p.name).length} project(s)`} />
+        <SummaryRow label="Gallery" value={`${form.gallery.filter(g => g.imageUrl).length} image(s)`} />
         <SummaryRow label="Email" value={form.socials.email} />
       </div>
 
@@ -441,7 +494,17 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
 
   const [step, setStep] = useState(1);
   // Prefer saved DB details (signed-in), then any local draft, then a blank form.
-  const [form, setForm] = useState<RawUserDetails>(() => initialData ?? readLocalForm() ?? emptyForm());
+  // Normalize so older saved data (no gallery / project imageUrl) stays valid.
+  const [form, setForm] = useState<RawUserDetails>(() => {
+    const loaded = initialData ?? readLocalForm();
+    if (!loaded) return emptyForm();
+    return {
+      ...emptyForm(),
+      ...loaded,
+      gallery: loaded.gallery ?? [],
+      projects: (loaded.projects ?? []).map((p) => ({ ...p, imageUrl: p.imageUrl ?? "" })),
+    };
+  });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -453,7 +516,7 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
     });
   }, [saveRawForm]);
 
-  const next = () => setStep((s) => Math.min(s + 1, 8));
+  const next = () => setStep((s) => Math.min(s + 1, LAST_STEP));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
   const generate = async () => {
@@ -543,8 +606,9 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
           {step === 4 && <Step4 {...STEP_PROPS} />}
           {step === 5 && <Step5 {...STEP_PROPS} />}
           {step === 6 && <Step6 {...STEP_PROPS} />}
-          {step === 7 && <Step7 {...STEP_PROPS} />}
-          {step === 8 && (
+          {step === 7 && <StepGallery {...STEP_PROPS} />}
+          {step === 8 && <Step7 {...STEP_PROPS} />}
+          {step === 9 && (
             <Step8
               form={form}
               generating={generating}
@@ -556,7 +620,7 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
         </div>
 
         {/* Navigation */}
-        {step < 8 && (
+        {step < LAST_STEP && (
           <div className="flex items-center justify-between">
             <button onClick={prev} disabled={step === 1}
               className="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
@@ -564,11 +628,11 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
             </button>
             <button onClick={next}
               className="inline-flex items-center gap-1.5 bg-zinc-900 text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-zinc-700 transition-colors cursor-pointer">
-              {step === 7 ? "Review & Generate" : "Continue"} <ChevronRight className="h-4 w-4" />
+              {step === LAST_STEP - 1 ? "Review & Generate" : "Continue"} <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         )}
-        {step === 8 && (
+        {step === LAST_STEP && (
           <div className="flex justify-start">
             <button onClick={prev} className="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 cursor-pointer">
               <ChevronLeft className="h-4 w-4" /> Back

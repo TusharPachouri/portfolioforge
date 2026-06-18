@@ -15,19 +15,6 @@ interface Props {
   generationCount: number;
 }
 
-function emptyForm(): RawUserDetails {
-  return {
-    name: "", tagline: "", location: "", avatarUrl: "",
-    userType: "experienced",
-    bio: "", openToWork: false, availability: "",
-    skills: [],
-    experience: [{ company: "", role: "", period: "", description: "" }],
-    education: [{ school: "", degree: "", period: "", notes: "" }],
-    projects: [{ name: "", description: "", techStack: [], repoUrl: "", liveUrl: "", featured: false }],
-    socials: { github: "", linkedin: "", twitter: "", website: "", email: "" },
-  };
-}
-
 export default function DetailsClient({ initialData, generationCount }: Props) {
   const router = useRouter();
   const { setPortfolioData: setContext, showToast } = usePortfolio();

@@ -40,6 +40,7 @@ export const demoData: PortfolioData = {
       repoUrl: "https://github.com/alex/portfolioforge",
       featured: true,
       role: "Solo developer",
+      imageUrl: "",
     },
     {
       name: "TaskFlow",
@@ -49,6 +50,7 @@ export const demoData: PortfolioData = {
       repoUrl: "https://github.com/alex/taskflow",
       featured: true,
       role: "Frontend lead",
+      imageUrl: "",
     },
     {
       name: "DataLens",
@@ -58,6 +60,7 @@ export const demoData: PortfolioData = {
       liveUrl: "",
       featured: false,
       role: "Solo developer",
+      imageUrl: "",
     },
   ],
   experience: [
@@ -88,6 +91,7 @@ export const demoData: PortfolioData = {
       notes: "Focus on distributed systems and human-computer interaction.",
     },
   ],
+  gallery: [],
   contact: {
     email: "alex@example.com",
     socials: {

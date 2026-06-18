@@ -14,6 +14,7 @@ Given the raw details below, produce a polished JSON object matching EXACTLY the
 - Project descriptions: max 280 chars, lead with what it does and the key technical decision.
 - Experience descriptions: max 400 chars, lead with impact.
 - seoTitle: max 60 chars. seoDescription: max 160 chars.
+- IMAGES: copy hero.avatarUrl, every projects[].imageUrl, and every gallery[] entry EXACTLY as given in the raw data. Never fabricate, guess, drop, or rewrite an image URL. If a field is empty, keep it as an empty string.
 - Respond with ONLY valid JSON — no markdown, no commentary.
 
 RAW DATA:
@@ -45,7 +46,8 @@ OUTPUT SCHEMA (respond with this exact shape):
     "repoUrl": "string",
     "liveUrl": "string",
     "featured": boolean,
-    "role": "string"
+    "role": "string",
+    "imageUrl": "string (copy verbatim from raw)"
   }],
   "experience": [{
     "company": "string",
@@ -59,6 +61,7 @@ OUTPUT SCHEMA (respond with this exact shape):
     "period": "string",
     "notes": "string"
   }],
+  "gallery": [{ "imageUrl": "string (copy verbatim from raw)", "caption": "string" }],
   "contact": {
     "email": "string",
     "socials": { "platform": "url" }

@@ -21,6 +21,12 @@ export interface RawProject {
   repoUrl: string;
   liveUrl: string;
   featured: boolean;
+  imageUrl: string;
+}
+
+export interface GalleryImage {
+  imageUrl: string;
+  caption: string;
 }
 
 export interface RawUserDetails {
@@ -36,6 +42,7 @@ export interface RawUserDetails {
   experience: RawExperience[];
   education: RawEducation[];
   projects: RawProject[];
+  gallery: GalleryImage[];
   socials: {
     github: string;
     linkedin: string;
@@ -76,6 +83,7 @@ export interface PortfolioData {
     liveUrl: string;
     featured: boolean;
     role: string;
+    imageUrl: string;
   }>;
   experience: Array<{
     company: string;
@@ -89,6 +97,7 @@ export interface PortfolioData {
     period: string;
     notes: string;
   }>;
+  gallery: GalleryImage[];
   contact: {
     email: string;
     socials: Record<string, string>;

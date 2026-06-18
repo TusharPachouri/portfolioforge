@@ -9,11 +9,16 @@ export default function ProjectsGrid({ data }: Props) {
       <h2 className="text-2xl font-bold mb-8" style={{ color: 'var(--pf-fg)' }}>Projects</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
         {data.projects.map((project) => (
-          <div key={project.name} className="pf-glass p-5 shadow-sm flex flex-col gap-3 hover:shadow-md transition-shadow" style={{
+          <div key={project.name} className="pf-glass shadow-sm flex flex-col gap-3 hover:shadow-md transition-shadow overflow-hidden" style={{
             background: 'var(--pf-card-bg)',
             border: '1px solid var(--pf-card-border)',
             borderRadius: 'var(--pf-radius)',
           }}>
+            {project.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={project.imageUrl} alt={project.name} loading="lazy" className="w-full aspect-video object-cover" />
+            )}
+            <div className={project.imageUrl ? "px-5 pb-5 flex flex-col gap-3 flex-1" : "p-5 flex flex-col gap-3 flex-1"}>
             <div>
               <div className="flex items-start justify-between gap-2 mb-1">
                 <h3 className="font-semibold" style={{ color: 'var(--pf-fg)' }}>{project.name}</h3>
@@ -52,6 +57,7 @@ export default function ProjectsGrid({ data }: Props) {
                   <Code className="h-3.5 w-3.5" /> Code
                 </a>
               )}
+            </div>
             </div>
           </div>
         ))}
