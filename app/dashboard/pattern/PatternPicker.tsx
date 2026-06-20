@@ -16,6 +16,7 @@ interface Props {
 
 const CATEGORIES: { id: PatternCategory | "all"; label: string }[] = [
   { id: "all", label: "All" },
+  { id: "animated", label: "Animated" },
   { id: "gradient", label: "Gradients" },
   { id: "geometric", label: "Geometric" },
   { id: "effects", label: "Effects" },

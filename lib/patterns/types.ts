@@ -1,6 +1,6 @@
 // ─── Pattern Types & Config Schema ──────────────────────────────────────────
 
-export type PatternCategory = "gradient" | "geometric" | "effects" | "decorative";
+export type PatternCategory = "animated" | "gradient" | "geometric" | "effects" | "decorative";
 
 export interface PatternConfig {
   c1: string;        // primary color (hex)

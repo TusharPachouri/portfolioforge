@@ -59,20 +59,92 @@ function dotPattern(
   };
 }
 
+// ─── Factory: animated background ───────────────────────────────────────────
+// Premium MOVING backgrounds (flowing gradients, vortex, drifting blobs). The
+// styleFn returns the background-related CSS props plus an `animation` that
+// references a keyframe defined in globals.css (pf-bg-*). Dark base by default.
+
+function styleToCss(props: React.CSSProperties): string {
+  return Object.entries(props)
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())}: ${v};`)
+    .join("\n");
+}
+
+function animPattern(
+  id: string, name: string, tags: string[],
+  styleFn: (c: PatternConfig) => React.CSSProperties,
+): PatternEntry {
+  return {
+    id, name, category: "animated", isPro: false, tags,
+    defaults: { c1: "#7c3aed", c2: "#22d3ee", baseColor: "#0a0a14", scale: 100, opacity: 100, blendMode: "normal" },
+    render: (config) => ({
+      ...styleFn(config),
+      opacity: config.opacity / 100,
+      mixBlendMode: config.blendMode as React.CSSProperties["mixBlendMode"],
+    }),
+    toCss: (config) =>
+      styleToCss({
+        ...styleFn(config),
+        opacity: config.opacity / 100,
+        mixBlendMode: config.blendMode as React.CSSProperties["mixBlendMode"],
+      }) + "\n\n/* Animations use @keyframes (pf-bg-pan / pf-bg-float / pf-bg-spin / pf-bg-hue)\n   and @property --pf-bg-angle from the global stylesheet. */",
+  };
+}
+
 // ─── Full Registry ──────────────────────────────────────────────────────────
 
 export const patterns: PatternEntry[] = [
 
-  // ── Gradients (6) ──────────────────────────────────────────────────────────
-  gradientPattern("gradient-linear-down", "Linear — Down", "gradient", ["linear", "vertical"],
-    (c) => `linear-gradient(180deg, ${hexToRgba(c.c1, c.opacity)}, ${hexToRgba(c.c2, c.opacity)})`),
+  // ── Animated backgrounds (5) — premium moving gradients, featured first ─────
 
-  gradientPattern("gradient-linear-right", "Linear — Right", "gradient", ["linear", "horizontal"],
-    (c) => `linear-gradient(90deg, ${hexToRgba(c.c1, c.opacity)}, ${hexToRgba(c.c2, c.opacity)})`),
+  // Aurora Flow — two colors drift diagonally, forever
+  animPattern("anim-aurora", "Aurora Flow", ["animated", "gradient", "aurora", "flowing", "premium", "moving"],
+    (c) => ({
+      background: `linear-gradient(125deg, ${c.c1}, ${c.c2}, ${c.c1}, ${c.c2})`,
+      backgroundSize: "300% 300%",
+      animation: "pf-bg-pan 16s ease infinite",
+    })),
 
-  gradientPattern("gradient-diagonal", "Diagonal", "gradient", ["diagonal", "angled"],
-    (c) => `linear-gradient(135deg, ${hexToRgba(c.c1, c.opacity)}, ${hexToRgba(c.c2, c.opacity)})`),
+  // Vortex — a conic gradient slowly twirls
+  animPattern("anim-vortex", "Vortex", ["animated", "vortex", "twirl", "conic", "spin", "moving"],
+    (c) => ({
+      background: `conic-gradient(from var(--pf-bg-angle, 0deg) at 50% 50%, ${c.c1}, ${c.c2}, ${c.c1}, ${c.c2}, ${c.c1})`,
+      animation: "pf-bg-spin 24s linear infinite",
+    })),
 
+  // Liquid Mesh — soft blobs float and morph across the canvas
+  animPattern("anim-liquid", "Liquid Mesh", ["animated", "mesh", "blobs", "liquid", "floating", "moving"],
+    (c) => ({
+      backgroundColor: c.baseColor,
+      backgroundImage:
+        `radial-gradient(42% 42% at 25% 30%, ${c.c1} 0%, transparent 60%), ` +
+        `radial-gradient(46% 46% at 78% 68%, ${c.c2} 0%, transparent 60%), ` +
+        `radial-gradient(38% 38% at 55% 52%, ${c.c1}aa 0%, transparent 60%)`,
+      backgroundSize: "200% 200%",
+      animation: "pf-bg-float 20s ease-in-out infinite",
+    })),
+
+  // Spectrum Shift — a gradient that continuously cycles its hue
+  animPattern("anim-spectrum", "Spectrum Shift", ["animated", "spectrum", "hue", "rainbow", "color", "moving"],
+    (c) => ({
+      background: `linear-gradient(135deg, ${c.c1}, ${c.c2})`,
+      animation: "pf-bg-hue 14s linear infinite",
+    })),
+
+  // Nebula — deep layered glow with a slow drift
+  animPattern("anim-nebula", "Nebula", ["animated", "nebula", "space", "glow", "depth", "moving"],
+    (c) => ({
+      backgroundColor: c.baseColor,
+      backgroundImage:
+        `radial-gradient(60% 55% at 20% 25%, ${c.c1}cc 0%, transparent 55%), ` +
+        `radial-gradient(55% 60% at 82% 75%, ${c.c2}cc 0%, transparent 55%), ` +
+        `radial-gradient(70% 60% at 60% 40%, ${c.c1}77 0%, transparent 60%)`,
+      backgroundSize: "200% 200%",
+      animation: "pf-bg-float 26s ease-in-out infinite",
+    })),
+
+  // ── Gradients ────────────────────────────────────────────────────────────────
   gradientPattern("gradient-radial-center", "Radial — Center", "gradient", ["radial", "center"],
     (c) => `radial-gradient(circle at center, ${hexToRgba(c.c1, c.opacity)}, ${hexToRgba(c.c2, c.opacity)})`),
 

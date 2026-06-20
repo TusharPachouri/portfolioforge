@@ -36,6 +36,56 @@ export interface ComponentEntry {
 }
 
 export const registry: ComponentEntry[] = [
+  // ── Advanced motion & physics (free) — surfaced first ───────────────────────
+  {
+    id: "hero-spotlight",
+    name: "Hero — Spotlight",
+    category: "section",
+    subcategory: "Hero",
+    description: "Hero with a cursor-following spotlight and a word-by-word entrance animation.",
+    tags: ["hero", "motion", "spotlight", "animated", "physics", "interactive"],
+    tier: "free",
+    sortOrder: -10,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "projects-tilt",
+    name: "Projects — 3D Tilt",
+    category: "section",
+    subcategory: "Projects",
+    description: "Project cards that tilt in 3D toward your cursor with spring physics.",
+    tags: ["projects", "3d", "tilt", "physics", "motion", "interactive"],
+    tier: "free",
+    sortOrder: -9,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "skills-marquee",
+    name: "Skills — Marquee",
+    category: "section",
+    subcategory: "Skills",
+    description: "Two rows of skills scrolling in opposite directions — pure-CSS motion.",
+    tags: ["skills", "marquee", "motion", "animated", "scroll"],
+    tier: "free",
+    sortOrder: -8,
+    variants: 1,
+    isNew: true,
+  },
+  {
+    id: "experience-reveal",
+    name: "Experience — Reveal",
+    category: "section",
+    subcategory: "Experience",
+    description: "Timeline that draws its line and reveals each role with a scroll-stagger.",
+    tags: ["experience", "timeline", "scroll", "reveal", "motion", "animated"],
+    tier: "free",
+    sortOrder: -7,
+    variants: 1,
+    isNew: true,
+  },
+
   // ── Newest (free) — surfaced at the top of the library ──────────────────────
   {
     id: "hero-gradient",

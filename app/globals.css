@@ -333,6 +333,35 @@ body {
   animation: dice-roll 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ── Animated background patterns (applied to portfolio backgrounds) ───────── */
+@property --pf-bg-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+/* Diagonal flow — pans an oversized gradient back and forth */
+@keyframes pf-bg-pan {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+/* Organic 2D drift for blob meshes */
+@keyframes pf-bg-float {
+  0%   { background-position: 0% 0%; }
+  25%  { background-position: 100% 30%; }
+  50%  { background-position: 60% 100%; }
+  75%  { background-position: 20% 60%; }
+  100% { background-position: 0% 0%; }
+}
+/* Vortex — rotates a conic gradient via the registered angle property */
+@keyframes pf-bg-spin {
+  to { --pf-bg-angle: 360deg; }
+}
+/* Continuous hue cycle */
+@keyframes pf-bg-hue {
+  to { filter: hue-rotate(360deg); }
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *,

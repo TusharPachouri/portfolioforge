@@ -27,6 +27,7 @@ type PatternTab = "all" | PatternCategory;
 const COMPONENT_TABS: ComponentTab[] = ["All Components", "Sections", "Primitives", "Free", "Pro"];
 const PATTERN_TABS: { id: PatternTab; label: string }[] = [
   { id: "all", label: "All Patterns" },
+  { id: "animated", label: "Animated" },
   { id: "gradient", label: "Gradients" },
   { id: "geometric", label: "Geometric" },
   { id: "decorative", label: "Decorative" },
@@ -45,13 +46,8 @@ interface CodeModalState {
   css: string;
 }
 
-// We pass the pattern style directly to use it as a true background.
-function bgStyle(s: React.CSSProperties): React.CSSProperties {
-  return { ...s };
-}
-
 export default function LibraryShowcase() {
-  const [libraryView, setLibraryView] = useState<"components" | "patterns">("components");
+  const [libraryView, setLibraryView] = useState<"components" | "patterns">("patterns");
   const [componentTab, setComponentTab] = useState<ComponentTab>("All Components");
   const [patternTab, setPatternTab] = useState<PatternTab>("all");
   const [activePattern, setActivePattern] = useState<ActivePattern | null>(null);
@@ -119,7 +115,7 @@ export default function LibraryShowcase() {
 
       {/* View toggle */}
       <div className="flex items-center justify-center gap-2 mb-8">
-        {(["components", "patterns"] as const).map((v) => (
+        {(["patterns", "components"] as const).map((v) => (
           <button
             key={v}
             type="button"

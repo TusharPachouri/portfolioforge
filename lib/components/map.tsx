@@ -20,6 +20,10 @@ import SkillsCards from "@/components/sections/SkillsCards";
 import ExperienceCards from "@/components/sections/ExperienceCards";
 import ProjectsShowcase from "@/components/sections/ProjectsShowcase";
 import ContactBanner from "@/components/sections/ContactBanner";
+import HeroSpotlight from "@/components/sections/HeroSpotlight";
+import ProjectsTilt from "@/components/sections/ProjectsTilt";
+import SkillsMarquee from "@/components/sections/SkillsMarquee";
+import ExperienceReveal from "@/components/sections/ExperienceReveal";
 
 type SectionComponent = React.ComponentType<{ data: PortfolioData }>;
 
@@ -47,4 +51,9 @@ export const componentMap: Record<string, SectionComponent> = {
   "experience-cards": ExperienceCards,
   "projects-showcase": ProjectsShowcase,
   "contact-banner": ContactBanner,
+  // Advanced — physics & motion (free)
+  "hero-spotlight": HeroSpotlight,
+  "projects-tilt": ProjectsTilt,
+  "skills-marquee": SkillsMarquee,
+  "experience-reveal": ExperienceReveal,
 };

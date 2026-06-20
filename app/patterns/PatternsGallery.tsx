@@ -10,6 +10,7 @@ import PatternCodeModal from "@/components/patterns/PatternCodeModal";
 
 const TABS: { id: "all" | PatternCategory; label: string }[] = [
   { id: "all", label: "All Patterns" },
+  { id: "animated", label: "Animated" },
   { id: "gradient", label: "Gradients" },
   { id: "geometric", label: "Geometric" },
   { id: "decorative", label: "Decorative" },
