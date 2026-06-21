@@ -1,192 +1,47 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { MapPin, ExternalLink } from "lucide-react";
 
-/* ─── Sample portfolio profiles ──────────────────────────────────────────── */
-const PROFILES = [
-  { id: 1, name: "Tushar Pachouri", role: "Product Engineer",   location: "Mathura, India",    gradient: ["#7c3aed", "#4c1d95"] as const, skills: ["Node.js", "React", "MongoDB"],    initials: "TP", open: true  },
-  { id: 2, name: "Sarah Kim",       role: "Full-Stack Dev",     location: "San Francisco, CA", gradient: ["#0891b2", "#0c4a6e"] as const, skills: ["React", "Node.js", "AWS"],        initials: "SK", open: true  },
-  { id: 3, name: "Marcus Rivera",   role: "Frontend Engineer",  location: "New York, NY",      gradient: ["#059669", "#064e3b"] as const, skills: ["Vue", "TypeScript", "Figma"],     initials: "MR", open: false },
-  { id: 4, name: "Priya Nair",      role: "ML Engineer",        location: "London, UK",        gradient: ["#db2777", "#831843"] as const, skills: ["Python", "PyTorch", "GCP"],       initials: "PN", open: true  },
-  { id: 5, name: "Jordan West",     role: "DevOps Engineer",    location: "Austin, TX",        gradient: ["#d97706", "#78350f"] as const, skills: ["K8s", "Terraform", "Rust"],       initials: "JW", open: false },
-  { id: 6, name: "Aiden Park",      role: "iOS Developer",      location: "Seoul, Korea",      gradient: ["#6d28d9", "#3b0764"] as const, skills: ["Swift", "SwiftUI", "Core ML"],    initials: "AP", open: true  },
-  { id: 7, name: "Nadia Hassan",    role: "Data Engineer",      location: "Berlin, Germany",   gradient: ["#0e7490", "#083344"] as const, skills: ["Spark", "dbt", "Airflow"],        initials: "NH", open: false },
-];
+const SKILLS = ["Node.js", "React", "MongoDB", "TypeScript", "Next.js", "PostgreSQL"];
 
-/* ─── Fan positions keyed by offset from center (-2 … +2) ───────────────── */
-const FAN = {
-  [-2]: { x: -168, y: 54, rotate: -13, scale: 0.72, opacity: 0.50, z: 1 },
-  [-1]: { x:  -90, y: 22, rotate:  -7, scale: 0.86, opacity: 0.78, z: 3 },
-  [ 0]: { x:    0, y:  0, rotate:   0, scale: 1.00, opacity: 1.00, z: 5 },
-  [ 1]: { x:   90, y: 22, rotate:   7, scale: 0.86, opacity: 0.78, z: 3 },
-  [ 2]: { x:  168, y: 54, rotate:  13, scale: 0.72, opacity: 0.50, z: 1 },
-} as const;
-
-const SPRING = { type: "spring", stiffness: 300, damping: 28, mass: 0.85 } as const;
-
-/* ─── Main component ─────────────────────────────────────────────────────── */
 export default function FanCardCarousel() {
-  const [center, setCenter] = useState(0);
-
-  const total = PROFILES.length;
-  const canPrev = center > 0;
-  const canNext = center < total - 1;
-
-  const goPrev = () => canPrev && setCenter((c) => c - 1);
-  const goNext = () => canNext && setCenter((c) => c + 1);
-
-  // Visible cards: offset -2 … +2, clamped to array bounds
-  const visible = PROFILES.map((p, i) => ({ ...p, offset: i - center })).filter(
-    ({ offset }) => offset >= -2 && offset <= 2
-  );
+  const [imgErr, setImgErr] = useState(false);
 
   return (
-    <div className="relative flex flex-col items-center" role="region" aria-label="Portfolio showcase">
-      {/* ── Fan of cards ─────────────────────────────────────────────────── */}
-      <div className="relative h-[360px] w-full flex items-center justify-center overflow-visible">
-        {visible.map(({ offset, ...profile }) => {
-          const f = FAN[offset as keyof typeof FAN];
-          const isCenter = offset === 0;
-
-          return (
-            <motion.div
-              key={profile.id}
-              animate={{ x: f.x, y: f.y, rotate: f.rotate, scale: f.scale, opacity: f.opacity }}
-              transition={SPRING}
-              style={{ position: "absolute", zIndex: f.z, cursor: isCenter ? "default" : "pointer" }}
-              onClick={() => !isCenter && setCenter((c) => c + offset)}
-              whileHover={
-                !isCenter
-                  ? { scale: f.scale * 1.04, opacity: Math.min(1, f.opacity + 0.12), transition: { duration: 0.15 } }
-                  : undefined
-              }
-            >
-              <PortfolioCard profile={profile} isFocused={isCenter} />
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* ── Navigation row ───────────────────────────────────────────────── */}
-      <div className="flex items-center gap-4 mt-6">
-        {/* Prev */}
-        <motion.button
-          whileHover={{ scale: canPrev ? 1.08 : 1 }}
-          whileTap={{ scale: canPrev ? 0.92 : 1 }}
-          onClick={goPrev}
-          disabled={!canPrev}
-          aria-label="Previous portfolio"
-          className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-colors ${
-            canPrev
-              ? "cursor-pointer border-zinc-200 bg-white text-zinc-600 hover:border-violet-400 hover:text-violet-600"
-              : "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300"
-          }`}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </motion.button>
-
-        {/* Dot indicators */}
-        <div className="flex items-center gap-1.5" role="tablist" aria-label="Portfolio slides">
-          {PROFILES.map((p, i) => (
-            <motion.button
-              key={p.id}
-              role="tab"
-              aria-selected={i === center}
-              aria-label={`View ${p.name}'s portfolio`}
-              onClick={() => setCenter(i)}
-              animate={{ width: i === center ? 22 : 6, backgroundColor: i === center ? "#7c3aed" : "#d4d4d8" }}
-              transition={{ type: "spring", stiffness: 500, damping: 40 }}
-              className="h-1.5 rounded-full cursor-pointer"
-            />
-          ))}
-        </div>
-
-        {/* Next */}
-        <motion.button
-          whileHover={{ scale: canNext ? 1.08 : 1 }}
-          whileTap={{ scale: canNext ? 0.92 : 1 }}
-          onClick={goNext}
-          disabled={!canNext}
-          aria-label="Next portfolio"
-          className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-colors ${
-            canNext
-              ? "cursor-pointer border-zinc-200 bg-white text-zinc-600 hover:border-violet-400 hover:text-violet-600"
-              : "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300"
-          }`}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </motion.button>
-      </div>
-
-      {/* Active profile label */}
-      <motion.p
-        key={center}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="mt-3 text-sm text-zinc-500"
+    <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+      {/* ── Profile Card ── */}
+      <div
+        className="shrink-0 relative overflow-hidden"
+        style={{
+          width: 220,
+          borderRadius: 24,
+          background: "linear-gradient(145deg, #7c3aed, #4c1d95)",
+          padding: "24px 20px 20px",
+          color: "#fff",
+          boxShadow:
+            "0 40px 90px -16px rgba(124,58,237,0.45), 0 0 0 1.5px rgba(255,255,255,0.22), inset 0 1px 0 rgba(255,255,255,0.15)",
+        }}
       >
-        <span className="font-semibold text-zinc-800">{PROFILES[center].name}</span>
-        {" · "}
-        {PROFILES[center].role}
-      </motion.p>
-    </div>
-  );
-}
+        {/* Decorative circles */}
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute", top: -50, right: -50,
+            width: 150, height: 150, borderRadius: "50%",
+            background: "rgba(255,255,255,0.07)", pointerEvents: "none",
+          }}
+        />
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute", bottom: -36, left: -36,
+            width: 120, height: 120, borderRadius: "50%",
+            background: "rgba(0,0,0,0.12)", pointerEvents: "none",
+          }}
+        />
 
-/* ─── Individual portfolio card ──────────────────────────────────────────── */
-interface Profile {
-  name: string;
-  role: string;
-  location: string;
-  gradient: readonly [string, string];
-  skills: string[];
-  initials: string;
-  open: boolean;
-}
-
-function PortfolioCard({ profile, isFocused }: { profile: Profile; isFocused: boolean }) {
-  return (
-    <div
-      style={{
-        width: 196,
-        height: 296,
-        borderRadius: 22,
-        background: `linear-gradient(145deg, ${profile.gradient[0]}, ${profile.gradient[1]})`,
-        padding: "20px 18px",
-        color: "#fff",
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: isFocused
-          ? "0 40px 90px -16px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(255,255,255,0.22), inset 0 1px 0 rgba(255,255,255,0.15)"
-          : "0 12px 36px -8px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.1)",
-        transition: "box-shadow 0.3s ease",
-        userSelect: "none",
-        WebkitUserSelect: "none",
-      }}
-    >
-      {/* Decorative circles */}
-      <span
-        aria-hidden="true"
-        style={{
-          position: "absolute", top: -44, right: -44,
-          width: 140, height: 140, borderRadius: "50%",
-          background: "rgba(255,255,255,0.07)", pointerEvents: "none",
-        }}
-      />
-      <span
-        aria-hidden="true"
-        style={{
-          position: "absolute", bottom: -32, left: -32,
-          width: 110, height: 110, borderRadius: "50%",
-          background: "rgba(0,0,0,0.12)", pointerEvents: "none",
-        }}
-      />
-
-      {/* Open-to-work badge */}
-      {profile.open && (
+        {/* Open-to-work badge */}
         <div
           style={{
             position: "absolute", top: 14, right: 14,
@@ -200,68 +55,110 @@ function PortfolioCard({ profile, isFocused }: { profile: Profile; isFocused: bo
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#34d399", display: "inline-block" }} />
           Open
         </div>
-      )}
 
-      {/* Avatar */}
-      <div
-        style={{
-          width: 54, height: 54, borderRadius: "50%",
-          background: "rgba(255,255,255,0.18)",
-          border: "2px solid rgba(255,255,255,0.28)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 20, fontWeight: 800,
-          marginBottom: 14, flexShrink: 0,
-        }}
-      >
-        {profile.initials}
+        {/* Photo / initials fallback */}
+        <div
+          style={{
+            width: 64, height: 64, borderRadius: "50%",
+            border: "2.5px solid rgba(255,255,255,0.3)",
+            marginBottom: 14, overflow: "hidden",
+            background: "rgba(255,255,255,0.15)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {!imgErr ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/me.jpg"
+              alt="Tushar Pachouri"
+              onError={() => setImgErr(true)}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}>TP</span>
+          )}
+        </div>
+
+        {/* Name */}
+        <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.2, marginBottom: 3 }}>
+          Tushar Pachouri
+        </div>
+
+        {/* Role */}
+        <div style={{ fontSize: 11, opacity: 0.82, marginBottom: 4 }}>Product Engineer</div>
+
+        {/* Location */}
+        <div style={{ fontSize: 10, opacity: 0.6, marginBottom: 18, display: "flex", alignItems: "center", gap: 3 }}>
+          <MapPin style={{ width: 8, height: 8, flexShrink: 0 }} />
+          Mathura, India
+        </div>
+
+        {/* Skill chips */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+          {["Node.js", "React", "MongoDB"].map((s) => (
+            <span
+              key={s}
+              style={{
+                fontSize: 9.5, fontWeight: 700,
+                padding: "3px 8px", borderRadius: 999,
+                background: "rgba(255,255,255,0.13)",
+                border: "1px solid rgba(255,255,255,0.18)",
+              }}
+            >
+              {s}
+            </span>
+          ))}
+        </div>
+
+        {/* PF watermark */}
+        <div
+          style={{
+            position: "absolute", bottom: 14, right: 14,
+            fontSize: 8, fontWeight: 800, letterSpacing: "0.07em",
+            background: "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.16)",
+            padding: "2px 7px", borderRadius: 999,
+            color: "rgba(255,255,255,0.5)", textTransform: "uppercase",
+          }}
+        >
+          PF
+        </div>
       </div>
 
-      {/* Name */}
-      <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.2, marginBottom: 3 }}>
-        {profile.name}
-      </div>
+      {/* ── Freelancer bio ── */}
+      <div className="text-left">
+        <p className="text-xs font-bold tracking-[0.18em] text-violet-500 uppercase mb-3">
+          Available for freelance
+        </p>
 
-      {/* Role */}
-      <div style={{ fontSize: 11, opacity: 0.82, marginBottom: 4 }}>
-        {profile.role}
-      </div>
+        <h3 className="text-3xl font-bold text-zinc-900 dark:text-white mb-3 leading-tight">
+          Tushar Pachouri
+        </h3>
 
-      {/* Location */}
-      <div style={{ fontSize: 10, opacity: 0.60, marginBottom: 18, display: "flex", alignItems: "center", gap: 3 }}>
-        <MapPin style={{ width: 8, height: 8, flexShrink: 0 }} />
-        {profile.location}
-      </div>
+        <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed mb-5 max-w-xs">
+          Full-stack developer and product engineer with 3+ years building scalable web apps.
+          I help startups and indie founders ship polished products fast — from backend APIs
+          to pixel-perfect frontends.
+        </p>
 
-      {/* Skill chips */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-        {profile.skills.map((s) => (
-          <span
-            key={s}
-            style={{
-              fontSize: 9.5, fontWeight: 700,
-              padding: "3px 8px", borderRadius: 999,
-              background: "rgba(255,255,255,0.13)",
-              border: "1px solid rgba(255,255,255,0.18)",
-            }}
-          >
-            {s}
-          </span>
-        ))}
-      </div>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {SKILLS.map((s) => (
+            <span
+              key={s}
+              className="text-xs font-semibold px-3 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-900/50"
+            >
+              {s}
+            </span>
+          ))}
+        </div>
 
-      {/* PortfolioForge watermark */}
-      <div
-        style={{
-          position: "absolute", bottom: 14, right: 14,
-          fontSize: 8, fontWeight: 800, letterSpacing: "0.07em",
-          background: "rgba(255,255,255,0.1)",
-          border: "1px solid rgba(255,255,255,0.16)",
-          padding: "2px 7px", borderRadius: 999,
-          color: "rgba(255,255,255,0.5)",
-          textTransform: "uppercase",
-        }}
-      >
-        PF
+        <a
+          href="/u/tusharpachouri"
+          className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors"
+        >
+          View Portfolio <ExternalLink className="h-4 w-4" />
+        </a>
       </div>
     </div>
   );

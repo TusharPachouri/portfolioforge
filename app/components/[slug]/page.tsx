@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { registry, getComponentById } from "@/lib/components/registry";
 import Navbar from "@/components/library/Navbar";
 import ComponentDetailClient from "./ComponentDetailClient";
@@ -21,6 +23,13 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
+function idToFileName(id: string): string {
+  return id
+    .split("-")
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join("");
+}
+
 export default async function ComponentDetailPage({ params }: Props) {
   const { slug } = await params;
   const component = getComponentById(slug);
@@ -31,10 +40,27 @@ export default async function ComponentDetailPage({ params }: Props) {
     .filter((c) => c.subcategory === component.subcategory && c.id !== component.id)
     .slice(0, 3);
 
+  // Read source file
+  const fileName = idToFileName(component.id);
+  const filePath = path.join(process.cwd(), "components", "sections", `${fileName}.tsx`);
+  let sourceCode = "// Source file not available for this component yet.";
+  try {
+    if (fs.existsSync(filePath)) {
+      sourceCode = fs.readFileSync(filePath, "utf-8");
+    }
+  } catch {
+    // leave default message
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <ComponentDetailClient component={component} related={related} />
+      <ComponentDetailClient
+        component={component}
+        related={related}
+        sourceCode={sourceCode}
+        fileName={fileName}
+      />
     </div>
   );
 }

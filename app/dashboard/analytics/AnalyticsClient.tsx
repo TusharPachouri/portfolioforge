@@ -2,35 +2,22 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { BarChart2, Eye, TrendingUp, Globe, Link2, Calendar, Copy, Check, ExternalLink, Share2 } from "lucide-react";
+import { Eye, TrendingUp, Calendar, BarChart2, Copy, Check, ExternalLink, Share2, Link2, Globe, MoreHorizontal } from "lucide-react";
 
-interface DailyView {
-  day: string; // 'YYYY-MM-DD'
-  count: number;
-}
-interface ReferrerRow {
-  referrer: string | null;
-  count: number;
-}
-interface CountryRow {
-  country: string | null;
-  count: number;
-}
+interface DailyView  { day: string; count: number; }
+interface ReferrerRow { referrer: string | null; count: number; }
+interface CountryRow  { country: string | null; count: number; }
 interface Analytics {
-  totalViews: number;
-  recentViews: number;
-  topReferrers: ReferrerRow[];
-  topCountries: CountryRow[];
-  dailyViews: DailyView[];
+  totalViews: number; recentViews: number;
+  topReferrers: ReferrerRow[]; topCountries: CountryRow[]; dailyViews: DailyView[];
 }
 interface Props {
-  analytics: Analytics;
-  slug: string;
-  totalAllTime: number;
-  published: boolean;
+  analytics: Analytics; slug: string; totalAllTime: number;
+  published: boolean; userName?: string;
 }
 
-// Build a continuous 30-day series (UTC) from sparse rows.
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function fill30Days(rows: DailyView[]): DailyView[] {
   const map = new Map(rows.map((r) => [r.day, r.count]));
   const out: DailyView[] = [];
@@ -44,79 +31,212 @@ function fill30Days(rows: DailyView[]): DailyView[] {
   return out;
 }
 
-function prettyReferrer(ref: string | null): string {
+function prettyReferrer(ref: string | null) {
   if (!ref) return "Direct";
-  try {
-    return new URL(ref).hostname.replace(/^www\./, "");
-  } catch {
-    return ref;
-  }
+  try { return new URL(ref).hostname.replace(/^www\./, ""); }
+  catch { return ref; }
 }
 
-function flagEmoji(code: string | null): string {
+function flagEmoji(code: string | null) {
   if (!code || code.length !== 2) return "🌐";
   const cc = code.toUpperCase();
   if (!/^[A-Z]{2}$/.test(cc)) return "🌐";
   return String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
 
-function StatCard({ icon: Icon, label, value, sub }: {
-  icon: React.ElementType; label: string; value: number | string; sub?: string;
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function smoothPath(pts: [number, number][]): string {
+  if (pts.length < 2) return "";
+  let d = `M ${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    const cx = (x0 + x1) / 2;
+    d += ` C ${cx},${y0} ${cx},${y1} ${x1},${y1}`;
+  }
+  return d;
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, icon: Icon, badge }: {
+  label: string; value: string | number; icon: React.ElementType; badge?: { text: string; positive: boolean };
 }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
-      <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 text-xs font-medium mb-3">
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-        {label}
+    <div className="bg-white border border-zinc-100 rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{label}</span>
+        <button className="h-6 w-6 flex items-center justify-center rounded-lg text-zinc-300 hover:text-zinc-500 transition-colors cursor-pointer">
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
       </div>
-      <p className="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums">
-        {typeof value === "number" ? value.toLocaleString() : value}
-      </p>
-      {sub && <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{sub}</p>}
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-2xl font-bold text-zinc-900 tabular-nums leading-none">
+          {typeof value === "number" ? value.toLocaleString() : value}
+        </p>
+        {badge && (
+          <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+            badge.positive
+              ? "bg-emerald-50 text-emerald-600"
+              : "bg-red-50 text-red-500"
+          }`}>
+            {badge.positive ? "+" : ""}{badge.text}
+          </span>
+        )}
+      </div>
+      <div className="h-8 w-8 rounded-xl bg-violet-50 flex items-center justify-center">
+        <Icon className="h-4 w-4 text-violet-500" />
+      </div>
     </div>
   );
 }
 
-function DailyChart({ data }: { data: DailyView[] }) {
-  const max = Math.max(...data.map((d) => d.count), 1);
+function LineChart({ data }: { data: DailyView[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const W = 500, H = 160;
+  const PAD = { t: 16, r: 12, b: 28, l: 44 };
+  const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+  const max = Math.max(...data.map(d => d.count), 1);
+
+  // Y-axis grid
+  const yTicks = [0, Math.ceil(max / 2), max];
+
+  const pts: [number, number][] = data.map((d, i) => [
+    PAD.l + (i / (data.length - 1)) * cW,
+    PAD.t + (1 - d.count / max) * cH,
+  ]);
+
+  const line = smoothPath(pts);
+  const area = pts.length > 1
+    ? `${line} L ${pts[pts.length - 1][0]},${PAD.t + cH} L ${pts[0][0]},${PAD.t + cH} Z`
+    : "";
+
   return (
-    <div>
-      <div className="flex items-end gap-[3px] h-36 w-full" role="img" aria-label="Daily views, last 30 days">
-        {data.map((d) => {
-          const h = Math.max(3, Math.round((d.count / max) * 140));
-          return (
-            <div key={d.day} className="group relative flex-1 flex flex-col justify-end h-full">
-              <div
-                style={{ height: h }}
-                className={`w-full rounded-sm transition-colors ${
-                  d.count > 0 ? "bg-violet-500 group-hover:bg-violet-600" : "bg-zinc-100 dark:bg-zinc-800"
-                }`}
-              />
-              {/* Tooltip */}
-              <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-10 whitespace-nowrap rounded-lg bg-zinc-900 dark:bg-zinc-700 px-2 py-1 text-[10px] font-medium text-white shadow-lg">
-                {d.count} view{d.count !== 1 ? "s" : ""} · {d.day.slice(5)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      {/* Axis labels — first, middle, last */}
-      <div className="flex justify-between mt-2 text-[10px] text-zinc-400 dark:text-zinc-500">
-        <span>{data[0]?.day.slice(5)}</span>
-        <span>{data[Math.floor(data.length / 2)]?.day.slice(5)}</span>
-        <span>Today</span>
-      </div>
-    </div>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }} onMouseLeave={() => setHover(null)}>
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {/* Y grid lines */}
+      {yTicks.map((v) => {
+        const y = PAD.t + (1 - v / max) * cH;
+        return (
+          <g key={v}>
+            <line x1={PAD.l} x2={W - PAD.r} y1={y} y2={y} stroke="#f4f4f5" strokeWidth="1" />
+            <text x={PAD.l - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#a1a1aa">{v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}</text>
+          </g>
+        );
+      })}
+
+      {/* Area + line */}
+      {area && <path d={area} fill="url(#lg)" />}
+      {line && <path d={line} fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinejoin="round" />}
+
+      {/* Points + hover interaction */}
+      {pts.map(([x, y], i) => (
+        <g key={i} onMouseEnter={() => setHover(i)}>
+          <rect x={x - 12} y={PAD.t} width={24} height={cH} fill="transparent" />
+          {hover === i && (
+            <>
+              <line x1={x} x2={x} y1={PAD.t} y2={PAD.t + cH} stroke="#7c3aed" strokeWidth="1" strokeDasharray="3 2" />
+              <circle cx={x} cy={y} r={4} fill="#7c3aed" stroke="white" strokeWidth="2" />
+              <rect x={x - 40} y={y - 34} width={80} height={28} rx={6} fill="#18181b" />
+              <text x={x} y={y - 22} textAnchor="middle" fontSize="10" fill="#a78bfa" fontWeight="600">
+                {data[i].count.toLocaleString()} views
+              </text>
+              <text x={x} y={y - 10} textAnchor="middle" fontSize="9" fill="#a1a1aa">
+                {data[i].day.slice(5)}
+              </text>
+            </>
+          )}
+        </g>
+      ))}
+
+      {/* X-axis day labels — every 5th */}
+      {data.map((d, i) => {
+        if (i % 5 !== 0 && i !== data.length - 1) return null;
+        const x = PAD.l + (i / (data.length - 1)) * cW;
+        const label = i === data.length - 1 ? "Today" : DAY_LABELS[new Date(d.day).getDay()];
+        return (
+          <text key={d.day} x={x} y={H - 6} textAnchor="middle" fontSize="9" fill="#a1a1aa">{label}</text>
+        );
+      })}
+    </svg>
   );
 }
 
-export default function AnalyticsClient({ analytics, slug, totalAllTime, published }: Props) {
+function BarChartViz({ data }: { data: DailyView[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const last7 = data.slice(-7);
+  const W = 300, H = 160;
+  const PAD = { t: 16, r: 12, b: 28, l: 44 };
+  const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+  const max = Math.max(...last7.map(d => d.count), 1);
+  const gap = 6;
+  const barW = (cW - gap * (last7.length - 1)) / last7.length;
+
+  const yTicks = [0, Math.ceil(max / 2), max];
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }} onMouseLeave={() => setHover(null)}>
+      <defs>
+        <linearGradient id="bgrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7c3aed" stopOpacity="1" />
+          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.6" />
+        </linearGradient>
+      </defs>
+
+      {yTicks.map((v) => {
+        const y = PAD.t + (1 - v / max) * cH;
+        return (
+          <g key={v}>
+            <line x1={PAD.l} x2={W - PAD.r} y1={y} y2={y} stroke="#f4f4f5" strokeWidth="1" />
+            <text x={PAD.l - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#a1a1aa">{v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}</text>
+          </g>
+        );
+      })}
+
+      {last7.map((d, i) => {
+        const bH = Math.max(2, (d.count / max) * cH);
+        const x = PAD.l + i * (barW + gap);
+        const y = PAD.t + cH - bH;
+        const label = DAY_LABELS[new Date(d.day).getDay()];
+        return (
+          <g key={d.day} onMouseEnter={() => setHover(i)}>
+            <rect
+              x={x} y={y} width={barW} height={bH} rx={3}
+              fill={hover === i ? "#6d28d9" : "url(#bgrad)"}
+              className="transition-colors"
+            />
+            {hover === i && d.count > 0 && (
+              <>
+                <rect x={x + barW / 2 - 24} y={y - 26} width={48} height={20} rx={4} fill="#18181b" />
+                <text x={x + barW / 2} y={y - 12} textAnchor="middle" fontSize="9" fill="white" fontWeight="600">
+                  {d.count} views
+                </text>
+              </>
+            )}
+            <text x={x + barW / 2} y={H - 6} textAnchor="middle" fontSize="9" fill="#a1a1aa">{label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
+export default function AnalyticsClient({ analytics, slug, totalAllTime, published, userName }: Props) {
   const { recentViews, topReferrers, topCountries, dailyViews } = analytics;
   const [copied, setCopied] = useState(false);
 
   const series = useMemo(() => fill30Days(dailyViews), [dailyViews]);
   const todayViews = series[series.length - 1]?.count ?? 0;
   const best = useMemo(() => series.reduce((a, b) => (b.count > a.count ? b : a), series[0] ?? { day: "", count: 0 }), [series]);
+  const avgPerDay = series.length ? Math.round(recentViews / 30) : 0;
   const hasAnyViews = totalAllTime > 0 || analytics.totalViews > 0;
 
   const publicUrl = `portfolioforge.dev/u/${slug}`;
@@ -125,137 +245,211 @@ export default function AnalyticsClient({ analytics, slug, totalAllTime, publish
       await navigator.clipboard.writeText(`https://${publicUrl}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable */
-    }
+    } catch { /* clipboard unavailable */ }
   };
 
-  const maxRef = Math.max(...topReferrers.map((r) => r.count), 1);
   const maxCountry = Math.max(...topCountries.map((c) => c.count), 1);
+  const totalCountryViews = topCountries.reduce((s, c) => s + c.count, 0) || 1;
+
+  const COUNTRY_COLORS = ["#7c3aed", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="p-6 md:p-8 space-y-6">
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-[0.2em] text-violet-600 dark:text-violet-400 uppercase mb-2">Insights</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
-            Portfolio <span className="font-display-serif italic font-normal">analytics</span>
+          <h1 className="text-xl font-bold text-zinc-900 leading-tight">
+            Welcome back, {userName ?? "there"}!
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{publicUrl}</p>
+          <p className="text-sm text-zinc-400 mt-0.5">Here&apos;s a quick overview of your portfolio performance today.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={copyUrl}
-            className="press-scale inline-flex items-center gap-1.5 text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="press-scale inline-flex items-center gap-1.5 text-sm font-medium border border-zinc-200 text-zinc-600 px-3.5 py-2 rounded-xl hover:bg-zinc-50 transition-colors cursor-pointer"
           >
-            {copied ? <><Check className="h-4 w-4 text-emerald-500" aria-hidden="true" /> Copied</> : <><Copy className="h-4 w-4" aria-hidden="true" /> Copy link</>}
+            {copied ? <><Check className="h-4 w-4 text-emerald-500" /> Copied</> : <><Copy className="h-4 w-4" /> Copy link</>}
           </button>
           {published && (
-            <a
-              href={`/u/${slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 dark:bg-zinc-700 text-white px-3 py-2 rounded-xl hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
-            >
-              <ExternalLink className="h-4 w-4" aria-hidden="true" /> Visit
+            <a href={`/u/${slug}`} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-3.5 py-2 rounded-xl hover:bg-zinc-700 transition-colors">
+              <ExternalLink className="h-4 w-4" /> Visit
             </a>
           )}
         </div>
       </div>
 
-      {/* Not-published notice */}
+      {/* Not published */}
       {!published && (
-        <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-sm text-amber-800 dark:text-amber-300">
-          <Share2 className="h-4 w-4 mt-0.5 shrink-0" aria-hidden="true" />
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+          <Share2 className="h-4 w-4 mt-0.5 shrink-0" />
           <div>
-            <p className="font-medium">Your portfolio isn&apos;t live yet</p>
-            <p className="mt-0.5 text-amber-700 dark:text-amber-400">Publish it from the builder to start collecting views.</p>
+            <p className="font-semibold">Your portfolio isn&apos;t live yet</p>
+            <p className="mt-0.5 text-amber-700">Publish it from the builder to start collecting views.</p>
           </div>
         </div>
       )}
 
       {!hasAnyViews ? (
         /* Empty state */
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-10 text-center shadow-sm">
-          <div className="h-14 w-14 bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-950 dark:to-indigo-950 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <BarChart2 className="h-6 w-6 text-violet-500" aria-hidden="true" />
+        <div className="bg-white border border-zinc-100 rounded-2xl p-10 text-center shadow-sm">
+          <div className="h-14 w-14 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <BarChart2 className="h-6 w-6 text-violet-500" />
           </div>
-          <h2 className="font-semibold text-zinc-900 dark:text-white mb-1">No views yet</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto mb-5">
+          <h2 className="font-semibold text-zinc-900 mb-1">No views yet</h2>
+          <p className="text-sm text-zinc-500 max-w-xs mx-auto mb-5">
             Share your portfolio link — visits will show up here in real time.
           </p>
-          <button
-            onClick={copyUrl}
-            className="press-scale inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors cursor-pointer"
-          >
-            {copied ? <><Check className="h-4 w-4 text-emerald-400" aria-hidden="true" /> Copied!</> : <><Copy className="h-4 w-4" aria-hidden="true" /> Copy your link</>}
+          <button onClick={copyUrl}
+            className="press-scale inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 transition-colors cursor-pointer">
+            {copied ? <><Check className="h-4 w-4 text-emerald-400" /> Copied!</> : <><Copy className="h-4 w-4" /> Copy your link</>}
           </button>
         </div>
       ) : (
         <>
-          {/* Stat cards */}
+          {/* ── Stat cards ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={Eye} label="All-time views" value={totalAllTime} />
-            <StatCard icon={TrendingUp} label="Last 30 days" value={recentViews} />
-            <StatCard icon={Calendar} label="Today" value={todayViews} />
-            <StatCard icon={BarChart2} label="Best day" value={best.count} sub={best.count > 0 ? best.day.slice(5) : undefined} />
+            <StatCard icon={Eye}       label="Total Views"   value={totalAllTime} badge={{ text: "all time", positive: true }} />
+            <StatCard icon={TrendingUp} label="Last 30 Days" value={recentViews}  badge={{ text: "+this month", positive: true }} />
+            <StatCard icon={Calendar}  label="Today"         value={todayViews}   />
+            <StatCard icon={BarChart2} label="Daily Average" value={avgPerDay}    badge={{ text: "/ day", positive: true }} />
           </div>
 
-          {/* Daily chart */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-4">Daily views — last 30 days</h2>
-            <DailyChart data={series} />
+          {/* ── Charts row ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Line chart — views over 30 days */}
+            <div className="lg:col-span-2 bg-white border border-zinc-100 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-900">Views Graph</h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">Last 30 days</p>
+                </div>
+                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-300 hover:text-zinc-500 transition-colors cursor-pointer">
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </div>
+              <LineChart data={series} />
+            </div>
+
+            {/* Bar chart — last 7 days */}
+            <div className="bg-white border border-zinc-100 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-900">Daily Visits</h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">This week</p>
+                </div>
+                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-300 hover:text-zinc-500 transition-colors cursor-pointer">
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </div>
+              <BarChartViz data={series} />
+            </div>
           </div>
 
-          {/* Referrers + Countries */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
-              <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-4 flex items-center gap-1.5">
-                <Link2 className="h-4 w-4 text-zinc-400" aria-hidden="true" /> Top referrers
-              </h2>
+          {/* ── Bottom row ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Top Referrers table */}
+            <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-50">
+                <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-zinc-400" /> Top Referrers
+                </h2>
+                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-300 hover:text-zinc-500 transition-colors cursor-pointer">
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </div>
               {topReferrers.length === 0 ? (
-                <p className="text-sm text-zinc-400 dark:text-zinc-500">Mostly direct visits so far.</p>
+                <p className="text-sm text-zinc-400 p-5">Mostly direct visits so far.</p>
               ) : (
-                <ul className="space-y-3">
-                  {topReferrers.map((r) => (
-                    <li key={r.referrer ?? "direct"} className="flex items-center gap-2.5 text-sm">
-                      <span className="text-zinc-600 dark:text-zinc-300 truncate w-28 shrink-0">{prettyReferrer(r.referrer)}</span>
-                      <div className="flex-1 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-violet-500 rounded-full transition-all" style={{ width: `${Math.round((r.count / maxRef) * 100)}%` }} />
-                      </div>
-                      <span className="text-zinc-400 dark:text-zinc-500 text-xs shrink-0 tabular-nums w-6 text-right">{r.count}</span>
-                    </li>
-                  ))}
-                </ul>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-50">
+                      <th className="px-5 py-2.5 text-left text-[10px] font-bold text-zinc-400 uppercase tracking-wider w-8">#</th>
+                      <th className="px-2 py-2.5 text-left text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Source</th>
+                      <th className="px-5 py-2.5 text-right text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Views</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-50">
+                    {topReferrers.slice(0, 6).map((r, i) => (
+                      <tr key={r.referrer ?? "direct"} className="hover:bg-zinc-50/60 transition-colors">
+                        <td className="px-5 py-3 text-xs font-bold text-zinc-300">{i + 1}</td>
+                        <td className="px-2 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-7 w-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+                              <Link2 className="h-3.5 w-3.5 text-violet-400" />
+                            </div>
+                            <span className="font-medium text-zinc-700 truncate max-w-[140px]">
+                              {prettyReferrer(r.referrer)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-right font-semibold text-zinc-900 tabular-nums">{r.count.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
 
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
-              <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-4 flex items-center gap-1.5">
-                <Globe className="h-4 w-4 text-zinc-400" aria-hidden="true" /> Top countries
-              </h2>
+            {/* Top Countries */}
+            <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-50">
+                <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-zinc-400" /> Top Countries
+                </h2>
+                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-300 hover:text-zinc-500 transition-colors cursor-pointer">
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </div>
+
               {topCountries.length === 0 ? (
-                <p className="text-sm text-zinc-400 dark:text-zinc-500">No country data yet.</p>
+                <p className="text-sm text-zinc-400 p-5">No country data yet.</p>
               ) : (
-                <ul className="space-y-3">
-                  {topCountries.map((c) => (
-                    <li key={c.country ?? "unknown"} className="flex items-center gap-2.5 text-sm">
-                      <span className="shrink-0 text-base leading-none" aria-hidden="true">{flagEmoji(c.country)}</span>
-                      <span className="text-zinc-600 dark:text-zinc-300 font-mono text-xs uppercase w-7 shrink-0">{c.country ?? "??"}</span>
-                      <div className="flex-1 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-violet-500 rounded-full transition-all" style={{ width: `${Math.round((c.count / maxCountry) * 100)}%` }} />
+                <div className="p-5 space-y-3.5">
+                  {topCountries.slice(0, 6).map((c, i) => {
+                    const pct = Math.round((c.count / totalCountryViews) * 100);
+                    const color = COUNTRY_COLORS[i % COUNTRY_COLORS.length];
+                    return (
+                      <div key={c.country ?? "unknown"} className="flex items-center gap-3">
+                        <span className="text-lg leading-none shrink-0" aria-hidden="true">{flagEmoji(c.country)}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-zinc-700 truncate">
+                              {c.country ?? "Unknown"}
+                            </span>
+                            <span className="text-xs font-bold text-zinc-500 tabular-nums shrink-0 ml-2">{pct}%</span>
+                          </div>
+                          <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${Math.round((c.count / maxCountry) * 100)}%`, background: color }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-zinc-400 tabular-nums shrink-0 w-8 text-right">{c.count}</span>
                       </div>
-                      <span className="text-zinc-400 dark:text-zinc-500 text-xs shrink-0 tabular-nums w-6 text-right">{c.count}</span>
-                    </li>
-                  ))}
-                </ul>
+                    );
+                  })}
+
+                  {/* Color legend */}
+                  {topCountries.length > 0 && (
+                    <div className="pt-2 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-zinc-50 mt-2">
+                      {topCountries.slice(0, 6).map((c, i) => (
+                        <span key={c.country ?? i} className="inline-flex items-center gap-1.5 text-[11px] text-zinc-500">
+                          <span className="h-2 w-2 rounded-full shrink-0" style={{ background: COUNTRY_COLORS[i % COUNTRY_COLORS.length] }} />
+                          {c.country ?? "Unknown"} {Math.round((c.count / totalCountryViews) * 100)}%
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
 
-          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">
-            Views are de-duplicated against bots · <Link href="/dashboard" className="underline hover:text-zinc-600 dark:hover:text-zinc-300">Back to builder</Link>
+          <p className="text-center text-xs text-zinc-400">
+            Views are de-duplicated against bots ·{" "}
+            <Link href="/dashboard" className="underline hover:text-zinc-600">Back to builder</Link>
           </p>
         </>
       )}

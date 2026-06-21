@@ -225,18 +225,18 @@ export default function HomePage() {
       <section className="pf-section border-b border-zinc-200 dark:border-zinc-800 py-24 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-4">
           <div className="text-center mb-14">
-            <p className="text-xs font-semibold tracking-[0.22em] text-violet-500 uppercase mb-3">Live portfolios</p>
+            <p className="text-xs font-semibold tracking-[0.22em] text-violet-500 uppercase mb-3">The creator</p>
             <h2
               className="pf-page-text text-3xl sm:text-4xl font-bold tracking-tight mb-3"
               style={{ color: "var(--pf-page-fg)" }}
             >
-              Built by developers like you
+              Built for developers, by a developer
             </h2>
             <p
               className="pf-page-text text-base max-w-md mx-auto"
               style={{ color: "var(--pf-page-muted)" }}
             >
-              Browse real portfolios shipping on PortfolioForge — click a card to explore.
+              PortfolioForge is made and maintained by a freelance engineer who needed it himself.
             </p>
           </div>
           <FanCardCarousel />

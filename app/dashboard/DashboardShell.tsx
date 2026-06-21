@@ -24,27 +24,31 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: t
   {
     label: "Build",
     items: [
-      { href: "/dashboard", label: "Builder", icon: Layers },
+      { href: "/dashboard",         label: "Builder",      icon: Layers   },
       { href: "/dashboard/details", label: "Edit Details", icon: Sparkles },
     ],
   },
   {
     label: "Customize",
     items: [
-      { href: "/dashboard/theme", label: "Theme", icon: Palette },
-      { href: "/dashboard/pattern", label: "Pattern", icon: LayoutGrid },
+      { href: "/dashboard/theme",   label: "Theme",        icon: Palette   },
+      { href: "/dashboard/pattern", label: "Pattern",      icon: LayoutGrid },
     ],
   },
   {
     label: "Account",
     items: [
       { href: "/dashboard/analytics", label: "Analytics", icon: BarChart2, proOnly: true },
-      { href: "/dashboard/settings", label: "Settings", icon: Settings },
+      { href: "/dashboard/settings",  label: "Settings",  icon: Settings  },
     ],
   },
 ];
 
-function SidebarNav({ pathname, isProUser, onNavigate }: {
+function SidebarNav({
+  pathname,
+  isProUser,
+  onNavigate,
+}: {
   pathname: string;
   isProUser: boolean;
   onNavigate?: () => void;
@@ -54,7 +58,7 @@ function SidebarNav({ pathname, isProUser, onNavigate }: {
       <nav className="space-y-5 flex-1" aria-label="Dashboard">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-[0.18em] text-zinc-400 dark:text-zinc-500 uppercase select-none">
+            <p className="px-3 mb-1.5 text-[10px] font-bold tracking-[0.18em] text-zinc-400 dark:text-zinc-500 uppercase select-none">
               {group.label}
             </p>
             <div className="space-y-0.5">
@@ -68,15 +72,12 @@ function SidebarNav({ pathname, isProUser, onNavigate }: {
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
                       active
-                        ? "bg-zinc-900 dark:bg-zinc-700 text-white shadow-sm"
+                        ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm shadow-violet-500/25"
                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800"
                     )}
                   >
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-violet-400" aria-hidden="true" />
-                    )}
                     <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span className="flex-1">{label}</span>
                     {locked && (
@@ -126,7 +127,6 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
 
   const isProUser = session.user.role === "pro" || session.user.role === "admin";
 
-  // Close the mobile drawer on Escape + lock scroll while open
   useEffect(() => {
     if (!mobileNav) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileNav(false); };
@@ -140,11 +140,8 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
     const next = !published;
     setPublished(next);
     startTransition(async () => {
-      try {
-        await publishPortfolio(next);
-      } catch {
-        setPublished(!next);
-      }
+      try { await publishPortfolio(next); }
+      catch { setPublished(!next); }
     });
   };
 
@@ -156,17 +153,17 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
       await navigator.clipboard.writeText(`${window.location.origin}${publicUrl}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard unavailable — leave the button state unchanged
-    }
+    } catch { /* clipboard unavailable */ }
   };
 
   return (
     <div className={cn("min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col", darkMode && "dark")}>
-      {/* Top bar */}
+
+      {/* ── Top bar ──────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-white/90 dark:bg-zinc-900/90 backdrop-blur border-b border-zinc-100 dark:border-zinc-800">
         <div className="max-w-screen-xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Hamburger (mobile) + Logo */}
+
+          {/* Left: hamburger + logo */}
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setMobileNav(true)}
@@ -181,8 +178,8 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
             </Link>
           </div>
 
-          {/* Public URL */}
-          <div className="flex-1 flex items-center justify-center gap-1 sm:gap-2 min-w-0 mx-1 sm:mx-0">
+          {/* Center: public URL */}
+          <div className="flex-1 flex items-center justify-center min-w-0 mx-1 sm:mx-0">
             {publicUrl && (
               <div className="flex items-center gap-1 sm:gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full pl-2 sm:pl-3 pr-1 sm:pr-1.5 py-1 max-w-xs w-full">
                 <Globe className="hidden sm:block h-3.5 w-3.5 text-zinc-400 shrink-0" aria-hidden="true" />
@@ -196,13 +193,15 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
                     aria-label={copied ? "Copied" : "Copy public URL"}
                     className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                   >
-                    {copied ? <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500" aria-hidden="true" /> : <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />}
+                    {copied
+                      ? <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500" aria-hidden="true" />
+                      : <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />}
                   </button>
                   <a
                     href={publicUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Open public portfolio in a new tab"
+                    aria-label="Open public portfolio"
                     className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                   >
                     <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
@@ -216,7 +215,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <button
               onClick={() => setDarkMode((d) => !d)}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={darkMode ? "Light mode" : "Dark mode"}
               className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               {darkMode ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
@@ -260,6 +259,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
         </div>
       </header>
 
+      {/* ── Body ─────────────────────────────────────────────────────── */}
       <div className="flex flex-1 max-w-screen-xl mx-auto w-full min-w-0">
         {/* Desktop sidebar */}
         <aside className="hidden md:flex w-52 shrink-0 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-4 px-2 min-h-full flex-col">
@@ -270,7 +270,7 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
         <main className="flex-1 overflow-auto min-w-0">{children}</main>
       </div>
 
-      {/* Mobile nav drawer */}
+      {/* ── Mobile nav drawer ──────────────────────────────────────────── */}
       {mobileNav && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] fade-in" onClick={() => setMobileNav(false)} />

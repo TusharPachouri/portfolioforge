@@ -28,6 +28,7 @@ export default async function AnalyticsPage() {
   }
 
   const analytics = await getAnalytics(portfolio.id);
+  const userName = session!.user.name?.split(" ")[0] ?? undefined;
 
   return (
     <AnalyticsClient
@@ -35,6 +36,7 @@ export default async function AnalyticsPage() {
       slug={portfolio.slug}
       totalAllTime={portfolio.viewCount}
       published={portfolio.published}
+      userName={userName}
     />
   );
 }

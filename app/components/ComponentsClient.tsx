@@ -11,13 +11,31 @@ import PortfolioBadge from "@/components/library/PortfolioBadge";
 export default function ComponentsClient() {
   const [filter, setFilter] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
+  const [activeSubcat, setActiveSubcat] = useState<string | null>(null);
+
+  const handleSubcatChange = (subcat: string | null) => {
+    setActiveSubcat(subcat);
+    // clear the tier/category tab filter so subcategory filter takes full effect
+    setFilter("all");
+  };
+
+  const handleFilterChange = (f: FilterTab) => {
+    setFilter(f);
+    setActiveSubcat(null); // clear sidebar selection when using top tabs
+  };
 
   const filtered = useMemo(() => {
     let items = registry;
-    if (filter === "sections") items = items.filter((c) => c.category === "section");
-    else if (filter === "primitives") items = items.filter((c) => c.category === "primitive");
-    else if (filter === "free") items = items.filter((c) => c.tier === "free");
-    else if (filter === "pro") items = items.filter((c) => c.tier === "pro");
+
+    // Sidebar subcategory takes precedence
+    if (activeSubcat) {
+      items = items.filter((c) => c.subcategory === activeSubcat);
+    } else {
+      if (filter === "sections")   items = items.filter((c) => c.category === "section");
+      else if (filter === "primitives") items = items.filter((c) => c.category === "primitive");
+      else if (filter === "free")  items = items.filter((c) => c.tier === "free");
+      else if (filter === "pro")   items = items.filter((c) => c.tier === "pro");
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -30,13 +48,13 @@ export default function ComponentsClient() {
       );
     }
     return items.sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [filter, search]);
+  }, [filter, search, activeSubcat]);
 
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Sidebar */}
       <div className="hidden md:block sticky top-14 h-[calc(100vh-3.5rem)]">
-        <Sidebar />
+        <Sidebar activeSubcat={activeSubcat ?? undefined} onSubcatChange={handleSubcatChange} />
       </div>
 
       {/* Main */}
@@ -51,7 +69,7 @@ export default function ComponentsClient() {
           {/* Search + Filter row */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
             <SearchBar value={search} onChange={setSearch} className="w-full sm:w-64" />
-            <FilterTabs active={filter} onChange={setFilter} />
+            <FilterTabs active={filter} onChange={handleFilterChange} />
             <span className="text-xs text-zinc-400 ml-auto">{filtered.length} components</span>
           </div>
 

@@ -576,33 +576,69 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
   const STEP_PROPS = { form, set };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 flex flex-col md:flex-row overflow-hidden">
+    <div className="min-h-screen bg-zinc-50 flex flex-col">
 
-      {/* ── Left Sidebar ────────────────────────────────────────────── */}
-      <aside className="hidden md:flex md:w-[260px] bg-white border-r border-zinc-200 flex-col shrink-0 h-full z-20">
-        {/* Logo */}
-        <Link href="/" className="h-16 flex items-center px-6 border-b border-zinc-100 shrink-0 hover:bg-zinc-50/70 transition-colors group">
-          <Logo className="w-6 h-6 mr-3 group-hover:scale-105 transition-transform" />
-          <span className="font-bold text-lg tracking-tight text-zinc-900">PortfolioForge</span>
-        </Link>
+      {/* ── Top bar (mirrors DashboardShell) ─────────────────────────── */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-zinc-100">
+        <div className="max-w-screen-xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 text-sm shrink-0">
+            <Logo className="h-7 w-7" />
+            <span className="hidden sm:inline">PortfolioForge</span>
+          </Link>
 
-        {/* Step progress */}
-        <div className="px-4 pt-4 pb-2 shrink-0">
-          <div className="flex items-center justify-between mb-1.5 px-1">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.1em]">Progress</span>
-            <span className="text-[10px] font-bold text-violet-600">{step}/{LAST_STEP}</span>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-sm min-w-0 flex-1 justify-center">
+            <Link href="/dashboard" className="hidden sm:flex items-center gap-1 text-zinc-400 hover:text-zinc-700 font-medium transition-colors shrink-0">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Dashboard
+            </Link>
+            <ChevronRight className="hidden sm:block h-3.5 w-3.5 text-zinc-300 shrink-0" />
+            <span className="text-zinc-400 font-medium shrink-0">Personalize</span>
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+            <span className="font-semibold text-zinc-800 truncate">{currentStep.label}</span>
           </div>
-          <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600 transition-colors bg-white cursor-pointer"
+              onClick={() => {/* noop */}}
+            >
+              Save draft
+            </button>
+            <button
+              className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-sm shadow-violet-500/20 cursor-pointer"
+              onClick={step === LAST_STEP ? generate : next}
+            >
+              {step === LAST_STEP ? (generating ? "Generating…" : "Create now") : "Continue"}
+              {step !== LAST_STEP && <ArrowRight className="h-4 w-4" />}
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Nav steps */}
-        <div className="p-3 flex-1 overflow-y-auto">
-          <nav className="space-y-0.5">
+      {/* ── Body ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-1 max-w-screen-xl mx-auto w-full min-w-0">
+
+        {/* Left Sidebar */}
+        <aside className="hidden md:flex w-52 shrink-0 border-r border-zinc-100 bg-white py-4 px-2 flex-col min-h-full">
+          {/* Progress */}
+          <div className="px-3 pb-3 shrink-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.1em]">Progress</span>
+              <span className="text-[10px] font-bold text-violet-600">{step}/{LAST_STEP}</span>
+            </div>
+            <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Steps nav */}
+          <nav className="space-y-0.5 flex-1 px-1">
             {STEPS.map((s) => {
               const active = step === s.id;
               const done = step > s.id;
@@ -611,87 +647,46 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
                   key={s.id}
                   onClick={() => setStep(s.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer group",
+                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer group",
                     active
-                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20"
+                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm shadow-violet-500/25"
                       : done
                         ? "text-zinc-600 hover:bg-zinc-50"
                         : "text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600"
                   )}
                 >
                   <span className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
-                    active ? "bg-white/20 text-white" : done ? "bg-green-100 text-green-700" : "bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200"
+                    "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all",
+                    active ? "bg-white/25 text-white" : done ? "bg-green-100 text-green-700" : "bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200"
                   )}>
-                    {done && !active ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : s.id}
+                    {done && !active ? <CheckCircle2 className="h-3 w-3 text-green-600" /> : s.id}
                   </span>
                   <span className="truncate">{s.label}</span>
                 </button>
               );
             })}
           </nav>
-        </div>
 
-        {/* AI Promo card */}
-        <div className="p-4 shrink-0 border-t border-zinc-100">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 p-4 text-white">
-            <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full" />
-            <div className="absolute -bottom-3 -left-3 w-14 h-14 bg-white/5 rounded-full" />
-            <div className="relative">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-xs font-bold">AI Powered</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-white/80 mb-3">
+          {/* AI promo card */}
+          <div className="mt-4 mx-1 shrink-0">
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 p-3.5 text-white shadow-md">
+              <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-white/10 blur-xl" aria-hidden="true" />
+              <p className="text-xs font-semibold mb-1 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" /> AI Powered
+              </p>
+              <p className="text-[11px] text-violet-200 leading-relaxed mb-2.5">
                 Gemini formats your raw data into polished portfolio content instantly.
               </p>
-              <button className="w-full py-1.5 bg-white text-violet-700 text-xs font-bold rounded-lg hover:bg-violet-50 cursor-pointer transition-colors">
+              <button className="press-scale block w-full text-center bg-white text-violet-700 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-violet-50 transition-colors cursor-pointer">
                 View plans
               </button>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
 
-      {/* ── Main Area ───────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-16 bg-white border-b border-zinc-200 px-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-1.5 text-sm">
-            <Link href="/" className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-700 font-medium transition-colors">
-              <Home className="h-3.5 w-3.5" />
-              Home
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-            <Link href="/dashboard" className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-700 font-medium transition-colors">
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              Dashboard
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-            <span className="text-zinc-400 font-medium">Personalize</span>
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-            <span className="font-semibold text-zinc-800">{currentStep.label}</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600 transition-colors bg-white cursor-pointer"
-              onClick={() => {/* noop */ }}
-            >
-              Save draft
-            </button>
-            <button
-              className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md shadow-violet-500/20 cursor-pointer"
-              onClick={step === LAST_STEP ? generate : next}
-            >
-              {step === LAST_STEP ? (generating ? "Generating…" : "Create now") : "Continue"}
-              {step !== LAST_STEP && <ArrowRight className="h-4 w-4" />}
-            </button>
-          </div>
-        </header>
-
-        {/* Content */}
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-          <div className="max-w-[1200px] mx-auto">
+        {/* Main content */}
+        <main className="flex-1 p-6 md:p-8 min-w-0">
+          <div className="max-w-[1100px] mx-auto">
 
             {/* Page title */}
             <div className="mb-8">
@@ -813,3 +808,4 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
     </div>
   );
 }
+
