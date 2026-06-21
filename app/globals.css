@@ -23,6 +23,10 @@
   --purple: #7c3aed;
   --purple-light: #ede9fe;
 
+  /* ── Landing page text tokens — updated by LibraryShowcase when a pattern overlay is active ── */
+  --pf-page-fg:     #18181b;   /* main headings / body text */
+  --pf-page-muted:  #71717a;   /* secondary / caption text  */
+
   /* ── Portfolio theme tokens (defaults = Minimalist) ───────────────────── */
   --pf-bg: #ffffff;
   --pf-fg: #18181b;
@@ -55,6 +59,21 @@
 * {
   border-color: var(--border);
 }
+
+/* Smooth text-colour transitions when the landing-page pattern overlay changes */
+.pf-page-text { transition: color 0.45s ease; }
+
+/* When a pattern is active, make the page root transparent so the body background
+   (CSS gradient or Vanta canvas at z-[-1]) shows through all sections */
+html.pf-pattern-active .pf-page-root {
+  background: transparent !important;
+}
+
+/* pf-section: frosted-glass panel that adapts to the active pattern brightness */
+.pf-section                                           { background: rgba(249,250,251,0.82); }
+.dark .pf-section                                     { background: rgba(24,24,27,0.60); }
+html.pf-pattern-active.pf-pattern-dark  .pf-section  { background: rgba(0,0,0,0.30) !important; }
+html.pf-pattern-active:not(.pf-pattern-dark) .pf-section { background: rgba(255,255,255,0.72) !important; }
 
 body {
   background: var(--background);

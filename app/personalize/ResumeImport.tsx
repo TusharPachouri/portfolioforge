@@ -61,22 +61,22 @@ export default function ResumeImport({ onParsed }: Props) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50/60 p-5 mb-6">
       <div className="absolute -top-10 -right-8 h-28 w-28 rounded-full bg-violet-200/40 blur-2xl pointer-events-none" aria-hidden="true" />
-      <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+      <div className="relative flex flex-col gap-5">
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm mt-0.5">
             <Sparkles className="h-5 w-5" aria-hidden="true" />
           </span>
-          <div className="min-w-0">
+          <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-zinc-900">Import from your résumé</h3>
-            <p className="text-sm text-zinc-500">Upload a PDF and AI fills every field for you — review, then generate.</p>
+            <p className="text-sm text-zinc-500 mt-1 leading-relaxed">Upload a PDF and AI fills every field for you — review, then generate.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={loading}
-            className="press-scale inline-flex items-center gap-2 bg-zinc-900 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+            className="press-scale flex-1 inline-flex justify-center items-center gap-2 bg-zinc-900 text-white text-sm font-semibold px-4 py-3 rounded-xl hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
             {loading ? "Reading…" : "Upload PDF"}
@@ -85,7 +85,7 @@ export default function ResumeImport({ onParsed }: Props) {
             type="button"
             onClick={() => { setShowPaste((s) => !s); setError(null); }}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600 px-3 py-2.5 rounded-xl hover:bg-white/70 transition-colors cursor-pointer disabled:opacity-60"
+            className="flex-1 inline-flex justify-center items-center gap-1.5 text-sm font-semibold text-zinc-700 bg-white border border-zinc-200 px-4 py-3 rounded-xl hover:bg-zinc-50 transition-colors shadow-sm cursor-pointer disabled:opacity-60"
           >
             <ClipboardPaste className="h-4 w-4" aria-hidden="true" /> Paste text
           </button>

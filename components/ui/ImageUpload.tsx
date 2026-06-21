@@ -134,11 +134,13 @@ export default function ImageUpload({ value, onChange, kind, aspect = "free", la
             {uploading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Upload className="h-5 w-5" aria-hidden="true" />}
           </span>
           <span className="text-sm font-medium text-zinc-600">
-            {uploading ? "Uploading…" : "Click to upload or drag an image"}
+            {uploading ? "Uploading…" : (kind === "avatar" ? "Upload avatar" : "Click to upload or drag an image")}
           </span>
-          <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
-            <ImageIcon className="h-3 w-3" aria-hidden="true" /> JPG, PNG, WebP or AVIF · up to 5MB
-          </span>
+          {kind !== "avatar" && (
+            <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+              <ImageIcon className="h-3 w-3" aria-hidden="true" /> JPG, PNG, WebP or AVIF · up to 5MB
+            </span>
+          )}
         </button>
       )}
 

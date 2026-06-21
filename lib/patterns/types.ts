@@ -24,6 +24,8 @@ export interface PatternEntry {
   isPro: boolean;
   tags: string[];
   defaults: PatternConfig;
+  /** Whether this pattern needs light or dark text placed over it */
+  textContrast: "light" | "dark";
   render: (config: PatternConfig) => React.CSSProperties;
   toCss: (config: PatternConfig) => string;
 }

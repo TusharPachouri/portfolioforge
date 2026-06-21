@@ -2,11 +2,13 @@
 
 import { useState, useTransition, useCallback } from "react";
 import { patterns, getPatternById } from "@/lib/patterns/registry";
+import { vantaPatterns, getVantaPatternById } from "@/lib/patterns/vantaRegistry";
 import { PatternConfig, PatternCategory, BLEND_MODES, DEFAULT_PATTERN_CONFIG } from "@/lib/patterns/types";
 import { savePattern, toggleFavourite } from "@/lib/actions/portfolio";
 import {
-  Search, Heart, Check, Copy, Loader2, X,
+  Search, Heart, Check, Copy, Loader2, X, Zap, ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   currentPatternId: string | null;
@@ -34,7 +36,7 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
   const [saved, setSaved] = useState(false);
   const [favLimitHit, setFavLimitHit] = useState(false);
 
-  // Filter patterns
+  // Filter CSS patterns
   const filtered = patterns.filter((p) => {
     if (category !== "all" && p.category !== category) return false;
     if (!search) return true;
@@ -42,8 +44,17 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
     return p.name.toLowerCase().includes(q) || p.tags.some((t) => t.includes(q));
   });
 
-  // Selected pattern entry
+  // Filter Vanta patterns (show under "all" or "effects")
+  const filteredVanta = vantaPatterns.filter((p) => {
+    if (category !== "all" && category !== "effects") return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return p.name.toLowerCase().includes(q) || p.tags.some((t) => t.includes(q));
+  });
+
+  // Selected pattern entry (CSS or Vanta)
   const selectedPattern = selectedId ? getPatternById(selectedId) : null;
+  const selectedVantaPattern = selectedId ? getVantaPatternById(selectedId) : null;
 
   // Preview style (pure client-side — instant updates)
   const previewStyle = selectedPattern
@@ -214,19 +225,139 @@ export default function PatternPicker({ currentPatternId, currentConfig, initial
               );
             })}
           </div>
+          {/* Vanta WebGL effects */}
+          {filteredVanta.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-px flex-1 bg-zinc-100" />
+                <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Zap className="h-3 w-3 text-yellow-500" />
+                  WebGL Effects
+                </p>
+                <div className="h-px flex-1 bg-zinc-100" />
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {filteredVanta.map((pattern) => {
+                  const isSelected = selectedId === pattern.id;
+                  return (
+                    <div
+                      key={pattern.id}
+                      className={`relative group aspect-square rounded-xl border-2 transition-all overflow-hidden ${
+                        isSelected
+                          ? "border-violet-500 shadow-md ring-2 ring-violet-200"
+                          : "border-zinc-200 hover:border-zinc-400"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedId(pattern.id); setSaved(false); }}
+                        aria-label={pattern.name}
+                        aria-pressed={isSelected}
+                        className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-violet-500"
+                      >
+                        <span className="absolute inset-0" style={pattern.thumbnailCss} />
+                        <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-0.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                          <Zap className="h-2 w-2 text-yellow-400" />
+                          WebGL
+                        </span>
+                        <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2 text-left">
+                          <span className="block text-white text-[11px] font-medium truncate">{pattern.name}</span>
+                        </span>
+                      </button>
+                      {isSelected && (
+                        <div className="pointer-events-none absolute top-1.5 right-1.5 h-5 w-5 bg-violet-500 rounded-full flex items-center justify-center">
+                          <Check className="h-3 w-3 text-white" aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {favLimitHit && (
             <p role="alert" className="text-xs text-amber-600 mt-3">
               Favourite limit reached — you can save up to 10 patterns on the free plan.
             </p>
           )}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && filteredVanta.length === 0 && (
             <div className="text-center py-12 text-zinc-500">
               <p className="text-sm">No patterns found</p>
             </div>
           )}
         </div>
 
-        {/* Customization panel */}
+        {/* Vanta selection panel */}
+        {selectedVantaPattern && !selectedPattern && (
+          <div className="w-full lg:w-72 shrink-0">
+            {/* Static thumbnail preview */}
+            <div
+              className="relative h-[280px] rounded-xl overflow-hidden mb-4 shadow-inner"
+              aria-hidden="true"
+              style={selectedVantaPattern.thumbnailCss}
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-white/60 text-xs text-center px-4">
+                  Hover the card in the library to see the live animation
+                </span>
+              </div>
+              <div className="absolute top-3 left-3">
+                <span className="inline-flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <Zap className="h-2.5 w-2.5 text-yellow-400" aria-hidden="true" />
+                  WebGL · Vanta.js
+                </span>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 to-transparent p-3">
+                <p className="text-white text-xs font-medium">{selectedVantaPattern.name}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 bg-white border border-zinc-200 rounded-xl p-4">
+              <h3 className="font-semibold text-zinc-900 text-sm">{selectedVantaPattern.name}</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Animated WebGL background. Colors and motion are built into the effect and cannot be customized here.
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {selectedVantaPattern.tags.slice(0, 4).map((tag) => (
+                  <span key={tag} className="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full capitalize">{tag}</span>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-2 pt-1">
+                <button
+                  onClick={handleApply}
+                  disabled={isPending}
+                  className="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isPending ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...</>
+                  ) : saved ? (
+                    <><Check className="h-3.5 w-3.5" /> Applied!</>
+                  ) : (
+                    "Apply Pattern"
+                  )}
+                </button>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/patterns/${selectedVantaPattern.id}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 border border-zinc-200 text-zinc-600 py-2 rounded-xl text-xs font-medium hover:bg-zinc-50 transition-all"
+                  >
+                    <ExternalLink className="h-3 w-3" /> Full Preview
+                  </Link>
+                  <button
+                    onClick={handleRemove}
+                    className="flex items-center gap-1.5 border border-zinc-200 text-zinc-400 px-3 py-2 rounded-xl text-xs font-medium hover:text-red-500 hover:border-red-200 transition-all cursor-pointer"
+                  >
+                    <X className="h-3 w-3" /> Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CSS Customization panel */}
         {selectedPattern && (
           <div className="w-full lg:w-72 shrink-0">
             {/* Live preview */}

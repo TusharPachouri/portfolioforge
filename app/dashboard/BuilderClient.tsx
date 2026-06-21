@@ -14,7 +14,9 @@ import FilterTabs, { FilterTab } from "@/components/library/FilterTabs";
 import SearchBar from "@/components/library/SearchBar";
 import { getThemeTokenStyle } from "@/lib/themes";
 import { getPatternById } from "@/lib/patterns/registry";
+import { getVantaPatternById } from "@/lib/patterns/vantaRegistry";
 import { PatternConfig } from "@/lib/patterns/types";
+import VantaPageBackground from "@/components/landing/VantaPageBackground";
 import { cn } from "@/lib/utils";
 import { canUseComponent, canAddMoreComponents, isPro } from "@/lib/gate";
 import UpgradeModal from "@/components/UpgradeModal";
@@ -531,7 +533,10 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
             // Resolve pattern
             let patternStyle: React.CSSProperties = {};
             let patternBaseColor: string | null = null;
-            if (activePattern.id) {
+            const isVantaPattern = activePattern.id
+              ? !!getVantaPatternById(activePattern.id)
+              : false;
+            if (activePattern.id && !isVantaPattern) {
               const pattern = getPatternById(activePattern.id);
               if (pattern) {
                 const config = activePattern.config ?? pattern.defaults;
@@ -539,6 +544,7 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
                 patternBaseColor = config.baseColor;
               }
             }
+            if (isVantaPattern) patternBaseColor = "#080814";
 
             const rootBg = patternBaseColor ?? (themeTokens["--pf-bg"] as string) ?? "#ffffff";
 
@@ -568,7 +574,13 @@ export default function BuilderClient({ portfolio, hasDetails, showImportPrompt,
                   }}
                 >
                   {/* Pattern overlay inside the preview box */}
-                  {activePattern.id && (
+                  {activePattern.id && isVantaPattern && (
+                    <VantaPageBackground
+                      patternId={activePattern.id}
+                      className="absolute inset-0 pointer-events-none z-0"
+                    />
+                  )}
+                  {activePattern.id && !isVantaPattern && (
                     <div
                       aria-hidden="true"
                       style={{

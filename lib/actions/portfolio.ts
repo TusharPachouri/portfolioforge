@@ -13,6 +13,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { isReserved } from "@/lib/slug";
 import { getThemeById } from "@/lib/themes";
 import { getPatternById } from "@/lib/patterns/registry";
+import { getVantaPatternById } from "@/lib/patterns/vantaRegistry";
 import { validatePatternConfig, PatternConfig } from "@/lib/patterns/types";
 import { sendPortfolioLiveEmail } from "@/lib/email";
 
@@ -294,8 +295,8 @@ export async function savePattern(
   const portfolio = await getUserPortfolio(user.id);
 
   if (patternId) {
-    const pattern = getPatternById(patternId);
-    if (!pattern) throw new Error("Invalid pattern ID");
+    const isValid = getPatternById(patternId) ?? getVantaPatternById(patternId);
+    if (!isValid) throw new Error("Invalid pattern ID");
   }
 
   if (config) {

@@ -19,9 +19,10 @@ function px(n: number): string {
 function gradientPattern(
   id: string, name: string, category: PatternCategory, tags: string[],
   bgFn: (c: PatternConfig) => string,
+  textContrast: "light" | "dark" = "light",
 ): PatternEntry {
   return {
-    id, name, category, isPro: false, tags,
+    id, name, category, isPro: false, tags, textContrast,
     defaults: { c1: "#7c3aed", c2: "#06b6d4", baseColor: "#ffffff", scale: 100, opacity: 100, blendMode: "normal" },
     render: (config) => ({
       background: bgFn(config),
@@ -43,6 +44,7 @@ function dotPattern(
 ): PatternEntry {
   return {
     id, name, category, isPro: false, tags,
+    textContrast: "dark", // dot patterns have white/light base
     defaults: { c1: "#6366f1", c2: "#a855f7", baseColor: "#ffffff", scale: 40, opacity: 60, blendMode: "normal" },
     render: (config) => ({
       backgroundImage: bgFn(config),
@@ -77,6 +79,7 @@ function animPattern(
 ): PatternEntry {
   return {
     id, name, category: "animated", isPro: false, tags,
+    textContrast: "light", // animated patterns use a dark base (#0a0a14)
     defaults: { c1: "#7c3aed", c2: "#22d3ee", baseColor: "#0a0a14", scale: 100, opacity: 100, blendMode: "normal" },
     render: (config) => ({
       ...styleFn(config),

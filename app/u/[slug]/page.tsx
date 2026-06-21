@@ -7,10 +7,12 @@ import { demoData } from "@/lib/demo-data";
 import { PortfolioData } from "@/types/portfolio";
 import { getThemeTokenStyle } from "@/lib/themes";
 import { getPatternById } from "@/lib/patterns/registry";
+import { getVantaPatternById } from "@/lib/patterns/vantaRegistry";
 import { PatternConfig } from "@/lib/patterns/types";
 import type { Metadata } from "next";
 import ViewRecorder from "./ViewRecorder";
 import FloatingNavbar from "@/components/portfolio/FloatingNavbar";
+import VantaPageBackground from "@/components/landing/VantaPageBackground";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -89,33 +91,75 @@ export default async function PublicPortfolioPage({ params }: Props) {
   // Pattern
   let patternStyle: React.CSSProperties = {};
   let patternBaseColor: string | null = null;
-  if (portfolio.patternId) {
+  let patternTextContrast: "light" | "dark" | null = null;
+  const isVantaPattern = portfolio.patternId
+    ? !!getVantaPatternById(portfolio.patternId)
+    : false;
+
+  if (portfolio.patternId && !isVantaPattern) {
     const pattern = getPatternById(portfolio.patternId);
     if (pattern) {
       const config = (portfolio.patternConfig as PatternConfig | null) ?? pattern.defaults;
       patternStyle = pattern.render(config);
       patternBaseColor = config.baseColor;
+      patternTextContrast = pattern.textContrast;
     }
+  } else if (portfolio.patternId && isVantaPattern) {
+    patternTextContrast = getVantaPatternById(portfolio.patternId)?.textContrast ?? "light";
   }
 
-  // The page root background: use pattern base color when a pattern is active,
-  // otherwise use the theme's --pf-bg token value directly.
-  const rootBg = patternBaseColor ?? (themeTokens["--pf-bg"] as string) ?? "#ffffff";
+  // When the pattern has a dark background (textContrast === "light"), override
+  // all text-related CSS tokens so every section looks correct automatically.
+  const patternTokenOverrides: React.CSSProperties = patternTextContrast === "light" ? {
+    "--pf-fg":                "rgba(255,255,255,0.95)",
+    "--pf-muted":             "rgba(255,255,255,0.60)",
+    "--pf-border":            "rgba(255,255,255,0.14)",
+    "--pf-card-bg":           "rgba(255,255,255,0.07)",
+    "--pf-card-border":       "rgba(255,255,255,0.12)",
+    "--pf-badge-bg":          "rgba(255,255,255,0.10)",
+    "--pf-badge-fg":          "rgba(255,255,255,0.88)",
+    "--pf-badge-border":      "rgba(255,255,255,0.14)",
+    "--pf-secondary-bg":      "rgba(255,255,255,0.05)",
+    "--pf-secondary-border":  "rgba(255,255,255,0.10)",
+    "--pf-link-hover-bg":     "rgba(255,255,255,0.08)",
+    "--pf-primary-btn-bg":    "rgba(255,255,255,0.92)",
+    "--pf-primary-btn-fg":    "#18181b",
+    "--pf-primary-btn-hover": "#ffffff",
+  } as React.CSSProperties : {};
+
+  // For Vanta patterns, keep the page root transparent so the fixed WebGL canvas
+  // (z-index: -1) is not painted over by the page div's own background.
+  // The Vanta canvas itself provides the dark background colour.
+  const rootBg = isVantaPattern
+    ? "transparent"
+    : (patternBaseColor ?? (themeTokens["--pf-bg"] as string) ?? "#ffffff");
 
   return (
     <div
       className="pf-themed min-h-screen"
       style={{
         ...(themeTokens as React.CSSProperties),
+        ...patternTokenOverrides,
         background: rootBg,
         color: "var(--pf-fg)",
         position: "relative",
       }}
     >
+      {/* Prevent white flash while WebGL canvas initialises */}
+      {isVantaPattern && (
+        <style>{`html, body { background-color: #080814; }`}</style>
+      )}
+
       <ViewRecorder slug={slug} />
 
-      {/* Pattern overlay — sits above the base color, behind content */}
-      {portfolio.patternId && (
+      {/* Vanta WebGL background — fixed viewport fill, content sits above at z-1 */}
+      {portfolio.patternId && isVantaPattern && (
+        <VantaPageBackground
+          patternId={portfolio.patternId}
+          className="fixed inset-0 pointer-events-none z-0"
+        />
+      )}
+      {portfolio.patternId && !isVantaPattern && (
         <div
           aria-hidden="true"
           style={{

@@ -9,13 +9,14 @@ import { saveDetailsAndGenerate } from "@/lib/actions/portfolio";
 import ImageUpload from "@/components/ui/ImageUpload";
 import ResumeImport from "./ResumeImport";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import Logo from "@/components/Logo";
 import {
   User, FileText, Wrench, Briefcase, GraduationCap,
   FolderOpen, Link2, CheckCircle2, Plus, Trash2,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle, Sparkles, Images
+  ChevronRight, Loader2, AlertCircle, Sparkles, Images, ArrowRight, LayoutDashboard, Home
 } from "lucide-react";
 
-// Read any in-progress draft an anonymous visitor left in localStorage.
 function readLocalForm(): RawUserDetails | null {
   if (typeof window === "undefined") return null;
   try {
@@ -27,20 +28,18 @@ function readLocalForm(): RawUserDetails | null {
   }
 }
 
-// ─── Step definitions ──────────────────────────────────────────────────────────
-
 const STEPS = [
-  { id: 1, label: "Basic Info", icon: User },
-  { id: 2, label: "About Me", icon: FileText },
-  { id: 3, label: "Skills", icon: Wrench },
-  { id: 4, label: "Experience", icon: Briefcase },
-  { id: 5, label: "Education", icon: GraduationCap },
-  { id: 6, label: "Projects", icon: FolderOpen },
-  { id: 7, label: "Gallery", icon: Images },
-  { id: 8, label: "Socials", icon: Link2 },
-  { id: 9, label: "Generate", icon: CheckCircle2 },
+  { id: 1, label: "Basic Info",   icon: User,          title: "Let's start with the basics",       subtitle: "Your name, tagline, and a photo — the first things visitors see." },
+  { id: 2, label: "About Me",     icon: FileText,       title: "Tell your story",                   subtitle: "A short bio goes a long way. Write freely — AI will polish it." },
+  { id: 3, label: "Skills",       icon: Wrench,         title: "What do you work with?",            subtitle: "Add your core technologies and tools." },
+  { id: 4, label: "Experience",   icon: Briefcase,      title: "Your work history",                 subtitle: "Add the positions you're most proud of." },
+  { id: 5, label: "Education",    icon: GraduationCap,  title: "Academic background",               subtitle: "Schools, degrees, and relevant coursework." },
+  { id: 6, label: "Projects",     icon: FolderOpen,     title: "Show off your work",                subtitle: "Projects are the heart of a great portfolio." },
+  { id: 7, label: "Gallery",      icon: Images,         title: "Visual highlights",                 subtitle: "Screenshots, designs, or anything visual. Totally optional." },
+  { id: 8, label: "Socials",      icon: Link2,          title: "Where can people find you?",        subtitle: "Add links to your profiles and personal website." },
+  { id: 9, label: "Generate",     icon: CheckCircle2,   title: "Ready to launch",                   subtitle: "AI will polish your data and build your live portfolio." },
 ];
-const LAST_STEP = STEPS.length; // 9
+const LAST_STEP = STEPS.length;
 
 const EMPTY_EXP: RawExperience = { company: "", role: "", period: "", description: "" };
 const EMPTY_EDU: RawEducation = { school: "", degree: "", period: "", notes: "" };
@@ -66,34 +65,50 @@ function emptyForm(): RawUserDetails {
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-zinc-700">{label}</label>
+      <label className="block text-sm font-semibold text-zinc-800">{label}</label>
       {children}
-      {hint && <p className="text-xs text-zinc-400">{hint}</p>}
+      {hint && <p className="text-xs text-zinc-400 mt-1">{hint}</p>}
     </div>
   );
 }
 
-function TextInput({ value, onChange, placeholder, className }: { value: string; onChange: (v: string) => void; placeholder?: string; className?: string }) {
+function TextInput({ value, onChange, placeholder, type = "text", className }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; type?: string; className?: string;
+}) {
   return (
     <input
-      type="text"
+      type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={cn("w-full h-9 px-3 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-white", className)}
+      className={cn(
+        "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400",
+        "focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all",
+        className
+      )}
     />
   );
 }
 
-function Textarea({ value, onChange, placeholder, rows = 4 }: { value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }) {
+function Textarea({ value, onChange, placeholder, rows = 4 }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
+}) {
   return (
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 resize-none bg-white"
+      className="w-full px-3 py-2.5 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none transition-all"
     />
+  );
+}
+
+function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("bg-zinc-50/70 border border-zinc-200 rounded-xl p-5", className)}>
+      {children}
+    </div>
   );
 }
 
@@ -101,37 +116,56 @@ function Textarea({ value, onChange, placeholder, rows = 4 }: { value: string; o
 
 function Step1({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
   return (
-    <div className="space-y-5">
-      <Field label="Full Name *">
-        <TextInput value={form.name} onChange={(v) => set({ name: v })} placeholder="Alex Rivera" />
-      </Field>
-      <Field label="Tagline *" hint="One punchy line — what you do and for whom. Max 140 chars.">
-        <TextInput value={form.tagline} onChange={(v) => set({ tagline: v })} placeholder="Full-stack engineer building fast, beautiful products" />
-      </Field>
-      <Field label="Location">
-        <TextInput value={form.location} onChange={(v) => set({ location: v })} placeholder="San Francisco, CA" />
-      </Field>
-      <Field label="Avatar" hint="Upload a photo, or paste an image URL below.">
-        <div className="max-w-[180px]">
-          <ImageUpload value={form.avatarUrl} onChange={(v) => set({ avatarUrl: v })} kind="avatar" aspect="square" />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Field label="First & Last Name">
+          <TextInput value={form.name} onChange={(v) => set({ name: v })} placeholder="Ex: Lawson Kenzi" />
+        </Field>
+        <Field label="Tagline">
+          <TextInput value={form.tagline} onChange={(v) => set({ tagline: v })} placeholder="Ex: Full-stack engineer building at scale" />
+        </Field>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Field label="Email">
+          <TextInput type="email" value={form.socials.email} onChange={(v) => set({ socials: { ...form.socials, email: v } })} placeholder="you@example.com" />
+        </Field>
+        <Field label="Location">
+          <TextInput value={form.location} onChange={(v) => set({ location: v })} placeholder="San Francisco, CA" />
+        </Field>
+      </div>
+
+      <Field label="Profile Photo" hint="PNG or JPG, up to 10 MB. You can also paste a URL.">
+        <div className="flex flex-col sm:flex-row gap-4 items-start border border-dashed border-zinc-300 bg-white rounded-xl p-4 hover:border-violet-300 transition-colors">
+          <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden">
+            <ImageUpload value={form.avatarUrl} onChange={(v) => set({ avatarUrl: v })} kind="avatar" aspect="square" />
+          </div>
+          <div className="flex-1 w-full min-w-0 flex flex-col justify-center gap-2">
+            <p className="text-xs font-medium text-zinc-500">Upload a photo or paste an image URL</p>
+            <TextInput
+              type="url"
+              value={form.avatarUrl}
+              onChange={(v) => set({ avatarUrl: v })}
+              placeholder="https://…"
+              className="h-9 text-xs"
+            />
+          </div>
         </div>
-        <input
-          type="url"
-          value={form.avatarUrl}
-          onChange={(e) => set({ avatarUrl: e.target.value })}
-          placeholder="https://… (optional)"
-          className="mt-2 w-full h-9 px-3 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-white"
-        />
       </Field>
-      <Field label="I am a...">
-        <div className="flex gap-3">
+
+      <Field label="Status">
+        <div className="inline-flex bg-zinc-100 p-1 rounded-lg gap-1">
           {(["experienced", "fresher"] as const).map((t) => (
-            <button key={t} onClick={() => set({ userType: t })}
+            <button
+              key={t}
+              onClick={() => set({ userType: t })}
               className={cn(
-                "flex-1 py-2.5 rounded-lg border text-sm font-medium transition-all cursor-pointer",
-                form.userType === t ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
-              )}>
-              {t === "experienced" ? "Experienced Professional" : "Student / Fresher"}
+                "px-5 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer",
+                form.userType === t
+                  ? "bg-white text-zinc-900 shadow-sm shadow-zinc-200/80 border border-zinc-200/60"
+                  : "text-zinc-500 hover:text-zinc-700"
+              )}
+            >
+              {t === "experienced" ? "Experienced" : "Student"}
             </button>
           ))}
         </div>
@@ -142,22 +176,28 @@ function Step1({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
 
 function Step2({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
   return (
-    <div className="space-y-5">
-      <Field label="Bio *" hint="Write freely — Gemini AI will polish and structure this for you.">
-        <Textarea value={form.bio} onChange={(v) => set({ bio: v })} placeholder="Tell your story. What have you built? What drives you? What are you looking for next?" rows={6} />
+    <div className="space-y-6">
+      <Field label="Your Story" hint="Write freely — Gemini AI will polish and structure this for you.">
+        <Textarea value={form.bio} onChange={(v) => set({ bio: v })} placeholder="What have you built? What drives you? What are you looking for next? Tell your story in your own words." rows={7} />
       </Field>
-      <Field label="Open to Work">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div onClick={() => set({ openToWork: !form.openToWork })}
-            className={cn("h-5 w-9 rounded-full transition-colors relative cursor-pointer", form.openToWork ? "bg-zinc-900" : "bg-zinc-200")}>
-            <div className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform", form.openToWork ? "translate-x-4" : "translate-x-0.5")} />
+
+      <SectionCard>
+        <Field label="Open to Work">
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-sm text-zinc-600 font-medium">I&apos;m currently open to new opportunities</span>
+            <button
+              onClick={() => set({ openToWork: !form.openToWork })}
+              className={cn("relative h-6 w-11 rounded-full transition-colors cursor-pointer shrink-0 shadow-inner", form.openToWork ? "bg-violet-600" : "bg-zinc-300")}
+            >
+              <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform", form.openToWork ? "translate-x-5" : "translate-x-0.5")} />
+            </button>
           </div>
-          <span className="text-sm text-zinc-700">I&apos;m currently open to new opportunities</span>
-        </label>
-      </Field>
+        </Field>
+      </SectionCard>
+
       {form.openToWork && (
-        <Field label="Availability note" hint="e.g. 'Available from June 2025' or 'Looking for remote roles'">
-          <TextInput value={form.availability} onChange={(v) => set({ availability: v })} placeholder="Available immediately for full-time roles" />
+        <Field label="Availability">
+          <TextInput value={form.availability} onChange={(v) => set({ availability: v })} placeholder="Ex: Available immediately for remote roles" />
         </Field>
       )}
     </div>
@@ -166,82 +206,75 @@ function Step2({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
 
 function Step3({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
   const [input, setInput] = useState("");
-
   const add = () => {
     const items = input.split(",").map((s) => s.trim()).filter(Boolean);
-    const updated = [...new Set([...form.skills, ...items])];
-    set({ skills: updated });
+    set({ skills: [...new Set([...form.skills, ...items])] });
     setInput("");
   };
-
   const remove = (skill: string) => set({ skills: form.skills.filter((s) => s !== skill) });
 
   return (
-    <div className="space-y-5">
-      <Field label="Skills" hint="Type skills separated by commas, then press Enter or Add">
+    <div className="space-y-6">
+      <Field label="Add Skills" hint="Comma-separated, then press Enter or click Add">
         <div className="flex gap-2">
-          <input
-            type="text"
+          <TextInput
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-            placeholder="React, TypeScript, Node.js, PostgreSQL..."
-            className="flex-1 h-9 px-3 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-white"
+            onChange={setInput}
+            placeholder="React, TypeScript, Node.js…"
+            className="flex-1"
           />
-          <button onClick={add}
-            className="px-4 h-9 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-700 transition-colors cursor-pointer">
+          <button onClick={add} className="px-4 h-10 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 transition-colors cursor-pointer shrink-0">
             Add
           </button>
         </div>
       </Field>
-      {form.skills.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+      {form.skills.length > 0 ? (
+        <div className="flex flex-wrap gap-2 p-4 bg-zinc-50 border border-zinc-200 rounded-xl">
           {form.skills.map((skill) => (
-            <span key={skill} className="inline-flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 text-zinc-700 text-sm px-3 py-1.5 rounded-full">
+            <span key={skill} className="inline-flex items-center gap-1.5 bg-white border border-zinc-200 text-zinc-700 text-sm px-3 py-1.5 rounded-full font-medium shadow-sm">
               {skill}
-              <button onClick={() => remove(skill)} className="text-zinc-400 hover:text-red-500 cursor-pointer leading-none">×</button>
+              <button onClick={() => remove(skill)} className="text-zinc-400 hover:text-red-500 cursor-pointer ml-0.5 leading-none text-base">&times;</button>
             </span>
           ))}
         </div>
-      )}
-      {form.skills.length === 0 && (
-        <p className="text-sm text-zinc-400 italic">No skills added yet.</p>
+      ) : (
+        <p className="text-sm text-zinc-400 italic p-4 border border-dashed border-zinc-200 rounded-xl text-center">No skills added yet.</p>
       )}
     </div>
   );
 }
 
 function Step4({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
-  const update = (i: number, field: keyof RawExperience, value: string) => {
-    const updated = form.experience.map((e, idx) => idx === i ? { ...e, [field]: value } : e);
-    set({ experience: updated });
-  };
+  const update = (i: number, field: keyof RawExperience, value: string) =>
+    set({ experience: form.experience.map((e, idx) => idx === i ? { ...e, [field]: value } : e) });
   const add = () => set({ experience: [...form.experience, { ...EMPTY_EXP }] });
   const remove = (i: number) => set({ experience: form.experience.filter((_, idx) => idx !== i) });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {form.experience.map((exp, i) => (
-        <div key={i} className="border border-zinc-100 rounded-xl p-5 space-y-4 relative">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Position {i + 1}</span>
+        <SectionCard key={i}>
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-200">
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Position {i + 1}</span>
             {form.experience.length > 1 && (
-              <button onClick={() => remove(i)} className="text-zinc-300 hover:text-red-400 transition-colors cursor-pointer">
-                <Trash2 className="h-4 w-4" />
+              <button onClick={() => remove(i)} className="text-xs font-semibold text-zinc-400 hover:text-red-500 transition-colors cursor-pointer flex items-center gap-1">
+                <Trash2 className="h-3.5 w-3.5" /> Remove
               </button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Company"><TextInput value={exp.company} onChange={(v) => update(i, "company", v)} placeholder="Stripe" /></Field>
-            <Field label="Role / Title"><TextInput value={exp.role} onChange={(v) => update(i, "role", v)} placeholder="Senior Software Engineer" /></Field>
-            <Field label="Period"><TextInput value={exp.period} onChange={(v) => update(i, "period", v)} placeholder="Jan 2022 – Present" /></Field>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Company"><TextInput value={exp.company} onChange={(v) => update(i, "company", v)} placeholder="Ex: Stripe" /></Field>
+              <Field label="Job Title"><TextInput value={exp.role} onChange={(v) => update(i, "role", v)} placeholder="Ex: Senior Software Engineer" /></Field>
+              <Field label="Period"><TextInput value={exp.period} onChange={(v) => update(i, "period", v)} placeholder="Jan 2022 – Present" /></Field>
+            </div>
+            <Field label="Description" hint="What did you build or achieve? Gemini will polish this.">
+              <Textarea value={exp.description} onChange={(v) => update(i, "description", v)} placeholder="Led development of the payments SDK…" rows={3} />
+            </Field>
           </div>
-          <Field label="Description" hint="What did you build or achieve? Gemini will polish this.">
-            <Textarea value={exp.description} onChange={(v) => update(i, "description", v)} placeholder="Led development of the payments SDK..." rows={3} />
-          </Field>
-        </div>
+        </SectionCard>
       ))}
-      <button onClick={add} className="inline-flex items-center gap-2 text-sm text-zinc-600 border border-dashed border-zinc-300 px-4 py-2.5 rounded-xl hover:border-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer w-full justify-center">
+      <button onClick={add} className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zinc-600 border border-dashed border-zinc-300 bg-white py-3 rounded-xl hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/40 transition-all cursor-pointer">
         <Plus className="h-4 w-4" /> Add another position
       </button>
     </div>
@@ -249,36 +282,36 @@ function Step4({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
 }
 
 function Step5({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
-  const update = (i: number, field: keyof RawEducation, value: string) => {
-    const updated = form.education.map((e, idx) => idx === i ? { ...e, [field]: value } : e);
-    set({ education: updated });
-  };
+  const update = (i: number, field: keyof RawEducation, value: string) =>
+    set({ education: form.education.map((e, idx) => idx === i ? { ...e, [field]: value } : e) });
   const add = () => set({ education: [...form.education, { ...EMPTY_EDU }] });
   const remove = (i: number) => set({ education: form.education.filter((_, idx) => idx !== i) });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {form.education.map((edu, i) => (
-        <div key={i} className="border border-zinc-100 rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Institution {i + 1}</span>
+        <SectionCard key={i}>
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-200">
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Institution {i + 1}</span>
             {form.education.length > 1 && (
-              <button onClick={() => remove(i)} className="text-zinc-300 hover:text-red-400 transition-colors cursor-pointer">
-                <Trash2 className="h-4 w-4" />
+              <button onClick={() => remove(i)} className="text-xs font-semibold text-zinc-400 hover:text-red-500 transition-colors cursor-pointer flex items-center gap-1">
+                <Trash2 className="h-3.5 w-3.5" /> Remove
               </button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="School / University"><TextInput value={edu.school} onChange={(v) => update(i, "school", v)} placeholder="UC Berkeley" /></Field>
-            <Field label="Degree"><TextInput value={edu.degree} onChange={(v) => update(i, "degree", v)} placeholder="B.S. Computer Science" /></Field>
-            <Field label="Period"><TextInput value={edu.period} onChange={(v) => update(i, "period", v)} placeholder="Sep 2019 – May 2023" /></Field>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="School / University"><TextInput value={edu.school} onChange={(v) => update(i, "school", v)} placeholder="Ex: UC Berkeley" /></Field>
+              <Field label="Degree"><TextInput value={edu.degree} onChange={(v) => update(i, "degree", v)} placeholder="Ex: B.S. Computer Science" /></Field>
+              <Field label="Period"><TextInput value={edu.period} onChange={(v) => update(i, "period", v)} placeholder="Sep 2019 – May 2023" /></Field>
+            </div>
+            <Field label="Coursework / Notes">
+              <Textarea value={edu.notes} onChange={(v) => update(i, "notes", v)} placeholder="Focus areas, notable courses, thesis…" rows={2} />
+            </Field>
           </div>
-          <Field label="Notes / Coursework (optional)">
-            <Textarea value={edu.notes} onChange={(v) => update(i, "notes", v)} placeholder="Focus areas, notable courses, thesis..." rows={2} />
-          </Field>
-        </div>
+        </SectionCard>
       ))}
-      <button onClick={add} className="inline-flex items-center gap-2 text-sm text-zinc-600 border border-dashed border-zinc-300 px-4 py-2.5 rounded-xl hover:border-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer w-full justify-center">
+      <button onClick={add} className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zinc-600 border border-dashed border-zinc-300 bg-white py-3 rounded-xl hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/40 transition-all cursor-pointer">
         <Plus className="h-4 w-4" /> Add another institution
       </button>
     </div>
@@ -288,77 +321,77 @@ function Step5({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
 function Step6({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
   const [techInput, setTechInput] = useState<Record<number, string>>({});
 
-  const update = <K extends keyof RawProject>(i: number, field: K, value: RawProject[K]) => {
-    const updated = form.projects.map((p, idx) => idx === i ? { ...p, [field]: value } : p);
-    set({ projects: updated });
-  };
+  const update = <K extends keyof RawProject>(i: number, field: K, value: RawProject[K]) =>
+    set({ projects: form.projects.map((p, idx) => idx === i ? { ...p, [field]: value } : p) });
 
   const addTech = (i: number) => {
     const items = (techInput[i] || "").split(",").map((s) => s.trim()).filter(Boolean);
-    const updated = [...new Set([...form.projects[i].techStack, ...items])];
-    update(i, "techStack", updated);
+    update(i, "techStack", [...new Set([...form.projects[i].techStack, ...items])]);
     setTechInput((prev) => ({ ...prev, [i]: "" }));
-  };
-
-  const removeTech = (i: number, tech: string) => {
-    update(i, "techStack", form.projects[i].techStack.filter((t) => t !== tech));
   };
 
   const add = () => set({ projects: [...form.projects, { ...EMPTY_PROJ }] });
   const remove = (i: number) => set({ projects: form.projects.filter((_, idx) => idx !== i) });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {form.projects.map((proj, i) => (
-        <div key={i} className="border border-zinc-100 rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Project {i + 1}</span>
+        <SectionCard key={i}>
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-200">
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-1.5 text-xs text-zinc-500 cursor-pointer">
-                <input type="checkbox" checked={proj.featured} onChange={(e) => update(i, "featured", e.target.checked)} className="rounded" />
+              <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Project {i + 1}</span>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-lg cursor-pointer border border-violet-200">
+                <input type="checkbox" checked={proj.featured} onChange={(e) => update(i, "featured", e.target.checked)} className="rounded accent-violet-600" />
                 Featured
               </label>
-              {form.projects.length > 1 && (
-                <button onClick={() => remove(i)} className="text-zinc-300 hover:text-red-400 transition-colors cursor-pointer">
-                  <Trash2 className="h-4 w-4" />
+            </div>
+            {form.projects.length > 1 && (
+              <button onClick={() => remove(i)} className="text-xs font-semibold text-zinc-400 hover:text-red-500 transition-colors cursor-pointer flex items-center gap-1">
+                <Trash2 className="h-3.5 w-3.5" /> Remove
+              </button>
+            )}
+          </div>
+          <div className="space-y-4">
+            <Field label="Project Name">
+              <TextInput value={proj.name} onChange={(v) => update(i, "name", v)} placeholder="Ex: My Awesome Project" />
+            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Repo URL"><TextInput value={proj.repoUrl} onChange={(v) => update(i, "repoUrl", v)} placeholder="https://github.com/…" /></Field>
+              <Field label="Live URL"><TextInput value={proj.liveUrl} onChange={(v) => update(i, "liveUrl", v)} placeholder="https://…" /></Field>
+            </div>
+            <Field label="Cover Image" hint="PNG or JPG">
+              <div className="bg-white border border-dashed border-zinc-300 rounded-xl p-3 max-w-sm hover:border-violet-300 transition-colors">
+                <ImageUpload value={proj.imageUrl} onChange={(v) => update(i, "imageUrl", v)} kind="project" aspect="video" />
+              </div>
+            </Field>
+            <Field label="Description">
+              <Textarea value={proj.description} onChange={(v) => update(i, "description", v)} placeholder="Describe the project, its purpose and your technical approach…" rows={3} />
+            </Field>
+            <Field label="Tech Stack">
+              <div className="flex gap-2 mb-2">
+                <TextInput
+                  value={techInput[i] || ""}
+                  onChange={(v) => setTechInput((prev) => ({ ...prev, [i]: v }))}
+                  placeholder="React, Node.js…"
+                  className="flex-1"
+                />
+                <button onClick={() => addTech(i)} className="px-4 h-10 bg-zinc-900 text-white text-sm font-semibold rounded-lg hover:bg-zinc-700 transition-colors cursor-pointer shrink-0">
+                  Add
                 </button>
-              )}
-            </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {proj.techStack.map((t) => (
+                  <span key={t} className="inline-flex items-center gap-1 bg-white border border-zinc-200 text-zinc-700 text-xs px-2.5 py-1 rounded-lg font-medium">
+                    {t}
+                    <button onClick={() => update(i, "techStack", proj.techStack.filter((x) => x !== t))} className="text-zinc-400 hover:text-red-500 cursor-pointer">&times;</button>
+                  </span>
+                ))}
+              </div>
+            </Field>
           </div>
-          <Field label="Project Name"><TextInput value={proj.name} onChange={(v) => update(i, "name", v)} placeholder="My Awesome Project" /></Field>
-          <Field label="Cover Image" hint="Optional — a screenshot or banner for this project.">
-            <ImageUpload value={proj.imageUrl} onChange={(v) => update(i, "imageUrl", v)} kind="project" aspect="video" />
-          </Field>
-          <Field label="Description" hint="What problem does it solve? Gemini will sharpen this.">
-            <Textarea value={proj.description} onChange={(v) => update(i, "description", v)} placeholder="Describe the project, its purpose and your technical approach..." rows={3} />
-          </Field>
-          <Field label="Tech Stack">
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={techInput[i] || ""}
-                onChange={(e) => setTechInput((prev) => ({ ...prev, [i]: e.target.value }))}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTech(i); } }}
-                placeholder="React, Node.js, PostgreSQL..."
-                className="flex-1 h-9 px-3 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-white"
-              />
-              <button onClick={() => addTech(i)} className="px-3 h-9 bg-zinc-900 text-white text-sm rounded-lg hover:bg-zinc-700 cursor-pointer">Add</button>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {proj.techStack.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 bg-zinc-50 border border-zinc-200 text-zinc-700 text-xs px-2 py-1 rounded-full">
-                  {t} <button onClick={() => removeTech(i, t)} className="text-zinc-400 hover:text-red-400 cursor-pointer">×</button>
-                </span>
-              ))}
-            </div>
-          </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Repo URL"><TextInput value={proj.repoUrl} onChange={(v) => update(i, "repoUrl", v)} placeholder="https://github.com/..." /></Field>
-            <Field label="Live URL"><TextInput value={proj.liveUrl} onChange={(v) => update(i, "liveUrl", v)} placeholder="https://..." /></Field>
-          </div>
-        </div>
+        </SectionCard>
       ))}
-      <button onClick={add} className="inline-flex items-center gap-2 text-sm text-zinc-600 border border-dashed border-zinc-300 px-4 py-2.5 rounded-xl hover:border-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer w-full justify-center">
+      <button onClick={add} className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zinc-600 border border-dashed border-zinc-300 bg-white py-3 rounded-xl hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/40 transition-all cursor-pointer">
         <Plus className="h-4 w-4" /> Add another project
       </button>
     </div>
@@ -366,34 +399,35 @@ function Step6({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
 }
 
 function StepGallery({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDetails>) => void }) {
-  const update = (i: number, field: keyof GalleryImage, value: string) => {
+  const update = (i: number, field: keyof GalleryImage, value: string) =>
     set({ gallery: form.gallery.map((g, idx) => (idx === i ? { ...g, [field]: value } : g)) });
-  };
   const add = () => set({ gallery: [...form.gallery, { ...EMPTY_GALLERY }] });
   const remove = (i: number) => set({ gallery: form.gallery.filter((_, idx) => idx !== i) });
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-zinc-500">
-        Add images for a gallery section — screenshots, designs, talks, anything visual. Optional.
-      </p>
+      {form.gallery.length === 0 && (
+        <p className="text-sm text-zinc-400 text-center py-8 border border-dashed border-zinc-200 rounded-xl">
+          No images yet. Add visual highlights — screenshots, designs, talk photos, anything.
+        </p>
+      )}
       {form.gallery.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {form.gallery.map((g, i) => (
-            <div key={i} className="border border-zinc-100 rounded-xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Image {i + 1}</span>
-                <button onClick={() => remove(i)} className="text-zinc-300 hover:text-red-400 transition-colors cursor-pointer">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+            <SectionCard key={i}>
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-zinc-200">
+                <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Image {i + 1}</span>
+                <button onClick={() => remove(i)} className="text-xs font-semibold text-zinc-400 hover:text-red-500 transition-colors cursor-pointer">Remove</button>
               </div>
-              <ImageUpload value={g.imageUrl} onChange={(v) => update(i, "imageUrl", v)} kind="gallery" aspect="video" />
+              <div className="bg-white border border-dashed border-zinc-300 rounded-xl p-2 mb-3">
+                <ImageUpload value={g.imageUrl} onChange={(v) => update(i, "imageUrl", v)} kind="gallery" aspect="video" />
+              </div>
               <TextInput value={g.caption} onChange={(v) => update(i, "caption", v)} placeholder="Caption (optional)" />
-            </div>
+            </SectionCard>
           ))}
         </div>
       )}
-      <button onClick={add} className="inline-flex items-center gap-2 text-sm text-zinc-600 border border-dashed border-zinc-300 px-4 py-2.5 rounded-xl hover:border-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer w-full justify-center">
+      <button onClick={add} className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zinc-600 border border-dashed border-zinc-300 bg-white py-3 rounded-xl hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/40 transition-all cursor-pointer">
         <Plus className="h-4 w-4" /> Add gallery image
       </button>
     </div>
@@ -405,78 +439,55 @@ function Step7({ form, set }: { form: RawUserDetails; set: (f: Partial<RawUserDe
   const upd = (field: keyof typeof s, value: string) => set({ socials: { ...s, [field]: value } });
   return (
     <div className="space-y-5">
-      <Field label="Email *"><TextInput value={s.email} onChange={(v) => upd("email", v)} placeholder="you@example.com" /></Field>
-      <Field label="GitHub"><TextInput value={s.github} onChange={(v) => upd("github", v)} placeholder="https://github.com/username" /></Field>
-      <Field label="LinkedIn"><TextInput value={s.linkedin} onChange={(v) => upd("linkedin", v)} placeholder="https://linkedin.com/in/username" /></Field>
-      <Field label="Twitter / X"><TextInput value={s.twitter} onChange={(v) => upd("twitter", v)} placeholder="https://twitter.com/username" /></Field>
-      <Field label="Personal Website"><TextInput value={s.website} onChange={(v) => upd("website", v)} placeholder="https://yoursite.com" /></Field>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Field label="GitHub"><TextInput value={s.github} onChange={(v) => upd("github", v)} placeholder="https://github.com/…" /></Field>
+        <Field label="LinkedIn"><TextInput value={s.linkedin} onChange={(v) => upd("linkedin", v)} placeholder="https://linkedin.com/in/…" /></Field>
+        <Field label="Twitter / X"><TextInput value={s.twitter} onChange={(v) => upd("twitter", v)} placeholder="https://twitter.com/…" /></Field>
+        <Field label="Personal Website"><TextInput value={s.website} onChange={(v) => upd("website", v)} placeholder="https://yoursite.com" /></Field>
+      </div>
     </div>
   );
 }
 
-function Step8({ form, generating, error, isAuthed, onGenerate }:
-  { form: RawUserDetails; generating: boolean; error: string | null; isAuthed: boolean; onGenerate: () => void }) {
+function Step8({ form, generating, error, isAuthed, onGenerate }: {
+  form: RawUserDetails; generating: boolean; error: string | null; isAuthed: boolean; onGenerate: () => void;
+}) {
   const missing: string[] = [];
   if (!form.name.trim()) missing.push("name");
   if (!form.bio.trim()) missing.push("bio");
   const incomplete = missing.length > 0;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-5 space-y-3 text-sm">
-        <SummaryRow label="Name" value={form.name} />
-        <SummaryRow label="Tagline" value={form.tagline} />
-        <SummaryRow label="Location" value={form.location} />
-        <SummaryRow label="Skills" value={`${form.skills.length} skills added`} />
-        <SummaryRow label="Experience" value={`${form.experience.filter(e => e.company).length} position(s)`} />
-        <SummaryRow label="Education" value={`${form.education.filter(e => e.school).length} institution(s)`} />
-        <SummaryRow label="Projects" value={`${form.projects.filter(p => p.name).length} project(s)`} />
-        <SummaryRow label="Gallery" value={`${form.gallery.filter(g => g.imageUrl).length} image(s)`} />
-        <SummaryRow label="Email" value={form.socials.email} />
-      </div>
-
+    <div className="space-y-5">
       {incomplete && (
         <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
           <div>
-            <p className="font-medium">Add your {missing.join(" and ")} for a better result</p>
+            <p className="font-semibold">Add your {missing.join(" and ")} for a better result</p>
             <p className="text-amber-700 mt-0.5">You can still generate — the AI will fill in sensible placeholders.</p>
           </div>
         </div>
       )}
-
       {error && (
         <div role="alert" className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
-          <p>{error}</p>
+          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+          <p className="font-semibold">{error}</p>
         </div>
       )}
-
       <button
         onClick={onGenerate}
         disabled={generating}
-        className="press-scale w-full flex items-center justify-center gap-2 bg-zinc-900 text-white py-3.5 rounded-xl font-semibold hover:bg-zinc-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+        className="w-full flex items-center justify-center gap-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-base hover:from-violet-700 hover:to-indigo-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-violet-500/25 tracking-tight"
       >
         {generating ? (
-          <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> {isAuthed ? "Generating & saving…" : "Generating with Gemini AI…"}</>
+          <><Loader2 className="h-5 w-5 animate-spin" /> {isAuthed ? "Generating & saving…" : "Generating…"}</>
         ) : (
-          <><Sparkles className="h-4 w-4" aria-hidden="true" /> {isAuthed ? "Generate & Save to Portfolio" : "Generate Portfolio Data with AI"}</>
+          <><Sparkles className="h-5 w-5" /> {isAuthed ? "Generate & Save Portfolio" : "Create my portfolio"}</>
         )}
       </button>
-      <p className="text-center text-xs text-zinc-400">
-        {isAuthed
-          ? "Saves to your account and updates your live portfolio instantly."
-          : "Generate as many times as you like · Your data never leaves your browser except for the AI call."}
+      <p className="text-center text-xs font-medium text-zinc-400">
+        {isAuthed ? "Saves to your account and updates your live portfolio instantly." : "Generate as many times as you like. Data stays local."}
       </p>
-    </div>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <span className="text-zinc-500 shrink-0">{label}</span>
-      <span className="text-zinc-800 text-right">{value || <span className="text-zinc-300 italic">not set</span>}</span>
     </div>
   );
 }
@@ -494,8 +505,6 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
   const { setPortfolioData: setContext, showToast } = usePortfolio();
 
   const [step, setStep] = useState(1);
-  // Prefer saved DB details (signed-in), then any local draft, then a blank form.
-  // Normalize so older saved data (no gallery / project imageUrl) stays valid.
   const [form, setForm] = useState<RawUserDetails>(() => {
     const loaded = initialData ?? readLocalForm();
     if (!loaded) return emptyForm();
@@ -517,18 +526,16 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
     });
   }, [saveRawForm]);
 
-  // Replace the whole form from a parsed résumé, normalizing to valid shape.
   const fillFromResume = (d: RawUserDetails) => {
     const normalized: RawUserDetails = {
-      ...emptyForm(),
-      ...d,
+      ...emptyForm(), ...d,
       gallery: d.gallery ?? [],
       projects: (d.projects ?? []).map((p) => ({ ...p, imageUrl: p.imageUrl ?? "" })),
     };
     setForm(normalized);
     saveRawForm(normalized);
     setStep(1);
-    showToast("Résumé imported ✓ — review your details, then generate");
+    showToast("Résumé imported ✓ — review your details");
   };
 
   const next = () => setStep((s) => Math.min(s + 1, LAST_STEP));
@@ -539,18 +546,12 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
     setError(null);
     try {
       if (isAuthed) {
-        // Persist details + generated portfolio straight to the DB, then show it live.
         const { data, source } = await saveDetailsAndGenerate(form);
         setContext(data, form);
-        showToast(
-          source.startsWith("gemini")
-            ? "Saved & generated with Gemini AI ✓"
-            : "Saved to your portfolio (used smart formatter)"
-        );
+        showToast(source.startsWith("gemini") ? "Saved & generated ✓" : "Saved to your portfolio");
         router.push("/dashboard");
         router.refresh();
       } else {
-        // Anonymous: generate a preview and keep it in localStorage.
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -560,11 +561,7 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
         const { data, source } = await res.json();
         setPortfolioData(data, form);
         setContext(data, form);
-        showToast(
-          source === "gemini" || source === "gemini-retry"
-            ? "Preview updated with your data ✓"
-            : "Preview updated (AI unavailable — used smart formatter)"
-        );
+        showToast(source === "gemini" || source === "gemini-retry" ? "Preview updated ✓" : "Preview updated");
         router.push("/preview");
       }
     } catch {
@@ -574,89 +571,244 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
     }
   };
 
+  const currentStep = STEPS[step - 1];
+  const progress = Math.round((step / LAST_STEP) * 100);
   const STEP_PROPS = { form, set };
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-zinc-900 mb-1">Personalize your portfolio</h1>
-          <p className="text-sm text-zinc-500">Upload your résumé or fill in your details — AI structures everything for you</p>
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 flex flex-col md:flex-row overflow-hidden">
+
+      {/* ── Left Sidebar ────────────────────────────────────────────── */}
+      <aside className="hidden md:flex md:w-[260px] bg-white border-r border-zinc-200 flex-col shrink-0 h-full z-20">
+        {/* Logo */}
+        <Link href="/" className="h-16 flex items-center px-6 border-b border-zinc-100 shrink-0 hover:bg-zinc-50/70 transition-colors group">
+          <Logo className="w-6 h-6 mr-3 group-hover:scale-105 transition-transform" />
+          <span className="font-bold text-lg tracking-tight text-zinc-900">PortfolioForge</span>
+        </Link>
+
+        {/* Step progress */}
+        <div className="px-4 pt-4 pb-2 shrink-0">
+          <div className="flex items-center justify-between mb-1.5 px-1">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.1em]">Progress</span>
+            <span className="text-[10px] font-bold text-violet-600">{step}/{LAST_STEP}</span>
+          </div>
+          <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
 
-        {/* Résumé fast-path — only on the first step */}
-        {step === 1 && <ResumeImport onParsed={fillFromResume} />}
+        {/* Nav steps */}
+        <div className="p-3 flex-1 overflow-y-auto">
+          <nav className="space-y-0.5">
+            {STEPS.map((s) => {
+              const active = step === s.id;
+              const done = step > s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setStep(s.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer group",
+                    active
+                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20"
+                      : done
+                        ? "text-zinc-600 hover:bg-zinc-50"
+                        : "text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600"
+                  )}
+                >
+                  <span className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
+                    active ? "bg-white/20 text-white" : done ? "bg-green-100 text-green-700" : "bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200"
+                  )}>
+                    {done && !active ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : s.id}
+                  </span>
+                  <span className="truncate">{s.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center gap-1 justify-center mb-8 overflow-x-auto pb-1">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
-            const active = step === s.id;
-            const done = step > s.id;
-            return (
-              <button key={s.id} onClick={() => setStep(s.id)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap",
-                  active ? "bg-zinc-900 text-white" : done ? "text-zinc-500 hover:text-zinc-700" : "text-zinc-400"
-                )}>
-                <Icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{s.label}</span>
-                {i < STEPS.length - 1 && <span className="text-zinc-300 ml-1">·</span>}
+        {/* AI Promo card */}
+        <div className="p-4 shrink-0 border-t border-zinc-100">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 p-4 text-white">
+            <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full" />
+            <div className="absolute -bottom-3 -left-3 w-14 h-14 bg-white/5 rounded-full" />
+            <div className="relative">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold">AI Powered</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-white/80 mb-3">
+                Gemini formats your raw data into polished portfolio content instantly.
+              </p>
+              <button className="w-full py-1.5 bg-white text-violet-700 text-xs font-bold rounded-lg hover:bg-violet-50 cursor-pointer transition-colors">
+                View plans
               </button>
-            );
-          })}
-        </div>
-
-        {/* Step card */}
-        <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-2 mb-6">
-            {(() => { const Icon = STEPS[step - 1].icon; return <div className="h-8 w-8 bg-zinc-100 rounded-lg flex items-center justify-center"><Icon className="h-4 w-4 text-zinc-700" /></div>; })()}
-            <div>
-              <h2 className="font-semibold text-zinc-900">{STEPS[step - 1].label}</h2>
-              <p className="text-xs text-zinc-400">Step {step} of {STEPS.length}</p>
             </div>
           </div>
-
-          {step === 1 && <Step1 {...STEP_PROPS} />}
-          {step === 2 && <Step2 {...STEP_PROPS} />}
-          {step === 3 && <Step3 {...STEP_PROPS} />}
-          {step === 4 && <Step4 {...STEP_PROPS} />}
-          {step === 5 && <Step5 {...STEP_PROPS} />}
-          {step === 6 && <Step6 {...STEP_PROPS} />}
-          {step === 7 && <StepGallery {...STEP_PROPS} />}
-          {step === 8 && <Step7 {...STEP_PROPS} />}
-          {step === 9 && (
-            <Step8
-              form={form}
-              generating={generating}
-              error={error}
-              isAuthed={isAuthed}
-              onGenerate={generate}
-            />
-          )}
         </div>
+      </aside>
 
-        {/* Navigation */}
-        {step < LAST_STEP && (
-          <div className="flex items-center justify-between">
-            <button onClick={prev} disabled={step === 1}
-              className="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
-              <ChevronLeft className="h-4 w-4" /> Back
+      {/* ── Main Area ───────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-16 bg-white border-b border-zinc-200 px-6 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-1.5 text-sm">
+            <Link href="/" className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-700 font-medium transition-colors">
+              <Home className="h-3.5 w-3.5" />
+              Home
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+            <Link href="/dashboard" className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-700 font-medium transition-colors">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Dashboard
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+            <span className="text-zinc-400 font-medium">Personalize</span>
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+            <span className="font-semibold text-zinc-800">{currentStep.label}</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600 transition-colors bg-white cursor-pointer"
+              onClick={() => {/* noop */ }}
+            >
+              Save draft
             </button>
-            <button onClick={next}
-              className="inline-flex items-center gap-1.5 bg-zinc-900 text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-zinc-700 transition-colors cursor-pointer">
-              {step === LAST_STEP - 1 ? "Review & Generate" : "Continue"} <ChevronRight className="h-4 w-4" />
+            <button
+              className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md shadow-violet-500/20 cursor-pointer"
+              onClick={step === LAST_STEP ? generate : next}
+            >
+              {step === LAST_STEP ? (generating ? "Generating…" : "Create now") : "Continue"}
+              {step !== LAST_STEP && <ArrowRight className="h-4 w-4" />}
             </button>
           </div>
-        )}
-        {step === LAST_STEP && (
-          <div className="flex justify-start">
-            <button onClick={prev} className="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 cursor-pointer">
-              <ChevronLeft className="h-4 w-4" /> Back
-            </button>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+          <div className="max-w-[1200px] mx-auto">
+
+            {/* Page title */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-600 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-full">
+                  Step {step} of {LAST_STEP}
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">{currentStep.title}</h1>
+              <p className="text-sm text-zinc-500 mt-1">{currentStep.subtitle}</p>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+              {/* Form card */}
+              <div className="flex-1 w-full min-w-0">
+                <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                  {/* Card accent bar */}
+                  <div className="h-1 bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-500" />
+
+                  <div className="p-6 md:p-7">
+                    {/* Card header */}
+                    <div className="flex items-center gap-4 mb-7 pb-5 border-b border-zinc-100">
+                      <div className="h-11 w-11 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-violet-500/25 shrink-0">
+                        {(() => { const Icon = currentStep.icon; return <Icon className="w-5 h-5 text-white" />; })()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-base font-bold text-zinc-900">{currentStep.label}</h2>
+                        <p className="text-xs text-zinc-400 font-medium mt-0.5">Step {step} of {LAST_STEP}</p>
+                      </div>
+                      <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 rounded-lg text-xs font-semibold text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 cursor-pointer transition-colors">
+                        Help &amp; Info
+                      </button>
+                    </div>
+
+                    {/* Step content */}
+                    {step === 1 && <Step1 {...STEP_PROPS} />}
+                    {step === 2 && <Step2 {...STEP_PROPS} />}
+                    {step === 3 && <Step3 {...STEP_PROPS} />}
+                    {step === 4 && <Step4 {...STEP_PROPS} />}
+                    {step === 5 && <Step5 {...STEP_PROPS} />}
+                    {step === 6 && <Step6 {...STEP_PROPS} />}
+                    {step === 7 && <StepGallery {...STEP_PROPS} />}
+                    {step === 8 && <Step7 {...STEP_PROPS} />}
+                    {step === 9 && <Step8 form={form} generating={generating} error={error} isAuthed={isAuthed} onGenerate={generate} />}
+                  </div>
+                </div>
+
+                {/* Step navigation */}
+                <div className={cn("mt-5 flex items-center", step === 1 ? "justify-end" : "justify-between")}>
+                  {step > 1 && (
+                    <button
+                      onClick={prev}
+                      className="px-5 py-2.5 border border-zinc-200 rounded-xl text-sm font-semibold bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800 transition-all cursor-pointer shadow-sm"
+                    >
+                      ← Back
+                    </button>
+                  )}
+                  {step < LAST_STEP && (
+                    <button
+                      onClick={next}
+                      className="flex items-center gap-1.5 px-5 py-2.5 bg-zinc-900 text-white text-sm font-bold rounded-xl hover:bg-zinc-700 transition-all cursor-pointer shadow-sm"
+                    >
+                      Next Step <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right panel */}
+              <div className="w-full lg:w-[300px] shrink-0 space-y-5 lg:sticky lg:top-24">
+                {step === 1 && (
+                  <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="w-4 h-4 text-zinc-500" />
+                        <h3 className="text-sm font-bold text-zinc-900">Import from résumé</h3>
+                      </div>
+                      <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+                        Upload your PDF or paste text — AI fills every field automatically.
+                      </p>
+                      <ResumeImport onParsed={fillFromResume} />
+                    </div>
+                  </div>
+                )}
+
+                {step === LAST_STEP && (
+                  <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <h3 className="text-sm font-bold text-zinc-900">Ready to launch</h3>
+                      </div>
+                      <p className="text-xs text-zinc-500 leading-relaxed">
+                        You&apos;ve filled in all your details. Click <strong>Generate</strong> and AI will create your live portfolio.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tips card for middle steps */}
+                {step > 1 && step < LAST_STEP && (
+                  <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-violet-500" />
+                      <h3 className="text-sm font-bold text-zinc-900">AI tip</h3>
+                    </div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Don&apos;t worry about perfect wording — fill in the raw details and let Gemini AI polish everything into professional copy.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        )}
+        </main>
       </div>
     </div>
   );

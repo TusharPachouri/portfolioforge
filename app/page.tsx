@@ -1,275 +1,250 @@
 import Link from "next/link";
 import Navbar from "@/components/library/Navbar";
-import PhysicsCardCluster from "@/components/landing/PhysicsCardCluster";
 import LibraryShowcase from "@/components/landing/LibraryShowcase";
-import PatternMarquee from "@/components/landing/PatternMarquee";
-import Reveal from "@/components/landing/Reveal";
-import CountUp from "@/components/landing/CountUp";
-import Magnetic from "@/components/landing/Magnetic";
-import TiltCard from "@/components/landing/TiltCard";
-import Parallax from "@/components/landing/Parallax";
+import FanCardCarousel from "@/components/landing/FanCardCarousel";
+import HeroWave from "@/components/landing/HeroWave";
 import Logo from "@/components/Logo";
-import { ArrowRight, Sparkles, Layers, Zap, Code2, Eye, Users, Check } from "lucide-react";
-
-const HEADLINE_LEAD = ["Build", "a", "stunning"];
-const HEADLINE_TAIL = ["in", "minutes"];
-
-const TRUST_POINTS = ["Free forever plan", "No credit card", "Export code anytime"];
-
-const FEATURES = [
-  {
-    icon: <Layers className="h-5 w-5" aria-hidden="true" />,
-    title: "Browse & Build",
-    description: "Pick sections from our library. Mix and match hero styles, project grids, timelines and more.",
-  },
-  {
-    icon: <Sparkles className="h-5 w-5" aria-hidden="true" />,
-    title: "AI-Powered",
-    description: "Fill a simple form — Gemini AI structures your data and populates every component instantly.",
-  },
-  {
-    icon: <Eye className="h-5 w-5" aria-hidden="true" />,
-    title: "Live Preview",
-    description: "See your real information in every component as you browse. What you see is what you publish.",
-  },
-  {
-    icon: <Zap className="h-5 w-5" aria-hidden="true" />,
-    title: "Zero Boilerplate",
-    description: "No coding required. Copy production-ready code or publish a live portfolio URL in one click.",
-  },
-];
-
-const STEPS = [
-  { step: "01", icon: <Layers className="h-6 w-6" aria-hidden="true" />, title: "Browse & pick sections", desc: "Explore our library of portfolio sections. Add the ones you like to your builder." },
-  { step: "02", icon: <Code2 className="h-6 w-6" aria-hidden="true" />, title: "Fill in your details", desc: "Answer a simple form about your experience and projects. Gemini AI does the rest." },
-  { step: "03", icon: <Users className="h-6 w-6" aria-hidden="true" />, title: "Preview & publish", desc: "See your live portfolio. Share a link or export the code." },
-];
+import { ArrowRight, Sparkles, Layers, Zap, Lock, FileText, Plus, Moon, ExternalLink, RefreshCw, BarChart, Settings, LayoutTemplate, Palette, PenLine } from "lucide-react";
+import MainFooter from "@/components/library/MainFooter";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
-      {/* Keep revealed content visible when JavaScript is unavailable */}
-      <noscript>
-        <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
-      </noscript>
-
+    <div className="pf-page-root min-h-screen bg-white dark:bg-[#191919] text-zinc-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30">
       <Navbar />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden -mt-[56px] md:-mt-[80px] pt-[56px] md:pt-[80px]">
-        {/* Backdrop: soft wash + rotating aurora + dot grid + parallax glow blobs */}
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-50/70 via-white to-white pointer-events-none" aria-hidden="true" />
-        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="hero-aurora motion-reduce:hidden" />
-        </div>
-        <div className="absolute inset-0 hero-dots pointer-events-none" aria-hidden="true" />
-        <Parallax speed={0.18} className="absolute -top-24 left-1/4 pointer-events-none" aria-hidden="true">
-          <div className="hero-blob w-[560px] h-[420px] rounded-full bg-gradient-to-br from-violet-300/45 to-indigo-300/35 blur-3xl" />
-        </Parallax>
-        <Parallax speed={0.1} className="absolute top-10 right-0 pointer-events-none" aria-hidden="true">
-          <div className="hero-blob-2 w-[460px] h-[360px] rounded-full bg-gradient-to-br from-fuchsia-300/40 to-violet-300/35 blur-3xl" />
-        </Parallax>
-        <Parallax speed={0.14} className="absolute top-40 left-1/2 pointer-events-none" aria-hidden="true">
-          <div className="hero-blob w-[360px] h-[300px] rounded-full bg-gradient-to-br from-sky-200/35 to-cyan-200/25 blur-3xl" />
-        </Parallax>
+      {/* ── Hero area — wave spans text + mockup ── */}
+      <div className="relative overflow-hidden">
+      <HeroWave />
 
-        <div className="relative max-w-6xl mx-auto px-4 pt-24 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Left column — headline + CTA */}
-          <div>
-            <div className="hero-rise-block inline-flex items-center gap-1.5 bg-white/80 backdrop-blur border border-zinc-200 px-3 py-1 rounded-full text-xs text-zinc-600 shadow-sm mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
-              27+ Components · 100% Free to start · AI-powered
-            </div>
-
-            <h1 className="text-5xl sm:text-6xl font-bold text-zinc-900 tracking-tight leading-[1.08] mb-5">
-              {HEADLINE_LEAD.map((word, i) => (
-                <span key={word} className="hero-word" style={{ animationDelay: `${80 + i * 70}ms` }}>
-                  {word}&nbsp;
-                </span>
-              ))}
-              <span className="hero-word" style={{ animationDelay: "290ms" }}>
-                <span className="font-display-serif italic font-normal text-gradient-animated pr-1">portfolio</span>
-              </span>
-              <br />
-              {HEADLINE_TAIL.map((word, i) => (
-                <span key={word} className="hero-word" style={{ animationDelay: `${360 + i * 70}ms` }}>
-                  {word}&nbsp;
-                </span>
-              ))}
-            </h1>
-
-            <p className="hero-rise-block text-lg text-zinc-600 max-w-xl mb-8 leading-relaxed" style={{ animationDelay: "420ms" }}>
-              Browse beautiful portfolio sections, fill in your details, and let Gemini AI assemble
-              everything with your real data. Preview live. Publish instantly.
-            </p>
-
-            <div className="hero-rise-block flex flex-col sm:flex-row items-start gap-3" style={{ animationDelay: "520ms" }}>
-              <Magnetic>
-                <Link href="/components"
-                  className="btn-shine inline-flex items-center gap-2 bg-zinc-900 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-zinc-700 transition-colors shadow-sm hover:shadow-md">
-                  Browse Components
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Magnetic>
-              <Magnetic strength={4}>
-                <Link href="/preview"
-                  className="inline-flex items-center gap-2 bg-white/70 backdrop-blur border border-zinc-200 text-zinc-700 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-zinc-50 transition-colors">
-                  <Eye className="h-4 w-4" aria-hidden="true" />
-                  See a Demo
-                </Link>
-              </Magnetic>
-            </div>
-
-            <div className="hero-rise-block flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-6 text-xs text-zinc-500" style={{ animationDelay: "620ms" }}>
-              {TRUST_POINTS.map((point) => (
-                <span key={point} className="inline-flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
-                  {point}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Right column — physics card cluster */}
-          <div className="hidden lg:block hero-rise-block" style={{ animationDelay: "300ms" }}>
-            <PhysicsCardCluster />
+      {/* Hero Section */}
+      <section className="pt-24 pb-16 px-4 max-w-5xl mx-auto text-center relative">
+        {/* Floating Avatar Bubbles */}
+        <div className="flex items-center justify-center mb-8 relative z-10">
+          <div className="flex -space-x-3">
+            <div className="w-12 h-12 rounded-full border-2 border-white dark:border-[#191919] bg-orange-100 flex items-center justify-center text-xl shadow-sm transform -rotate-12 hover:rotate-0 transition-transform cursor-pointer">👩‍💻</div>
+            <div className="w-12 h-12 rounded-full border-2 border-white dark:border-[#191919] bg-blue-100 flex items-center justify-center text-xl shadow-sm transform rotate-6 hover:rotate-0 transition-transform cursor-pointer">👨‍🎨</div>
+            <div className="w-14 h-14 rounded-full border-2 border-white dark:border-[#191919] bg-violet-100 flex items-center justify-center text-2xl shadow-md z-10 transform scale-110 hover:scale-125 transition-transform cursor-pointer">🤖</div>
+            <div className="w-12 h-12 rounded-full border-2 border-white dark:border-[#191919] bg-emerald-100 flex items-center justify-center text-xl shadow-sm transform -rotate-6 hover:rotate-0 transition-transform cursor-pointer">⚡️</div>
+            <div className="w-12 h-12 rounded-full border-2 border-white dark:border-[#191919] bg-pink-100 flex items-center justify-center text-xl shadow-sm transform rotate-12 hover:rotate-0 transition-transform cursor-pointer">✨</div>
           </div>
         </div>
 
-        {/* Mobile fallback — show cluster below text */}
-        <div className="block lg:hidden max-w-md mx-auto px-4 pb-8">
-          <PhysicsCardCluster />
+        <h1
+          className="pf-page-text text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1] relative z-10"
+          style={{ color: "var(--pf-page-fg)" }}
+        >
+          Where developers and AI{" "}
+          <br className="hidden sm:block" />
+          <span className="relative inline-block px-3 mx-1">
+            <span className="relative z-10" style={{ color: "#18181b" }}>Ship</span>
+            <div className="absolute inset-0 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg -z-10 transform -rotate-2"></div>
+            <div className="absolute left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></div>
+          </span>{" "}
+          portfolios.
+        </h1>
+
+        <p
+          className="pf-page-text text-lg sm:text-xl max-w-2xl mx-auto mb-8 font-medium"
+          style={{ color: "var(--pf-page-muted)" }}
+        >
+          Capture context, find beautiful components, and automate your portfolio creation with AI built for developers.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
+          <Link href="/components" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-semibold transition-colors shadow-sm text-sm sm:text-base">
+            Get PortfolioForge free
+          </Link>
+          <Link href="/preview" className="w-full sm:w-auto text-blue-600 dark:text-blue-400 hover:underline px-6 py-3 font-semibold transition-colors text-sm sm:text-base">
+            Request a demo →
+          </Link>
         </div>
 
-        {/* Pattern swatch marquee — real patterns from the registry */}
-        <div className="relative max-w-6xl mx-auto px-4 pb-10">
-          <PatternMarquee />
-        </div>
       </section>
 
-      {/* Stats bar */}
-      <section className="border-y border-zinc-100 bg-zinc-50/50">
-        <div className="max-w-4xl mx-auto px-4 py-6 grid grid-cols-3 divide-x divide-zinc-200">
-          <div className="text-center px-4">
-            <p className="text-2xl font-bold text-zinc-900"><CountUp to={27} suffix="+" /></p>
-            <p className="text-sm text-zinc-600 mt-0.5">Components</p>
-          </div>
-          <div className="text-center px-4">
-            <p className="text-2xl font-bold text-zinc-900"><CountUp to={100} suffix="%" /></p>
-            <p className="text-sm text-zinc-600 mt-0.5">Free to start</p>
-          </div>
-          <div className="text-center px-4">
-            <p className="text-2xl font-bold text-zinc-900">CSS</p>
-            <p className="text-sm text-zinc-600 mt-0.5">& Tailwind</p>
+      {/* Hero Visual App Mockup */}
+      <section className="max-w-6xl mx-auto px-4 relative mb-24 z-10">
+        {/* Floating decorations */}
+        <div className="absolute -top-6 -left-4 sm:-left-12 z-20 animate-bounce" style={{ animationDuration: '3.5s' }}>
+          <div className="bg-white dark:bg-zinc-800 p-3 rounded-xl shadow-lg border border-zinc-100 dark:border-zinc-700 transform -rotate-12">
+            <Sparkles className="w-6 h-6 text-yellow-500" />
           </div>
         </div>
-      </section>
-
-      {/* Component + Pattern library (interactive) */}
-      <Reveal>
-        <LibraryShowcase />
-      </Reveal>
-
-      {/* Features */}
-      <section className="bg-zinc-50/50 border-t border-zinc-100 py-20">
-        <div className="max-w-5xl mx-auto px-4">
-          <Reveal className="text-center mb-12">
-            <p className="text-xs font-semibold tracking-[0.22em] text-violet-600 uppercase mb-3">Why PortfolioForge</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight mb-3">
-              Everything you <span className="font-display-serif italic font-normal">need</span>
-            </h2>
-            <p className="text-zinc-500">From browsing to publishing — all in one place</p>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={i * 80} className="h-full">
-                <TiltCard maxTilt={8} className="h-full rounded-xl">
-                  <div className="card-premium h-full bg-white border border-zinc-100 rounded-xl p-5 shadow-sm hover:shadow-lg transition-shadow duration-300">
-                    <div className="h-9 w-9 bg-gradient-to-br from-violet-50 to-indigo-100 rounded-lg flex items-center justify-center mb-4 text-violet-700">
-                      {f.icon}
-                    </div>
-                    <h3 className="font-semibold text-zinc-900 mb-1.5">{f.title}</h3>
-                    <p className="text-sm text-zinc-600 leading-relaxed">{f.description}</p>
-                  </div>
-                </TiltCard>
-              </Reveal>
-            ))}
+        <div className="absolute top-1/3 -right-4 sm:-right-12 z-20 animate-bounce" style={{ animationDuration: '4.2s' }}>
+          <div className="bg-white dark:bg-zinc-800 p-3 rounded-xl shadow-lg border border-zinc-100 dark:border-zinc-700 transform rotate-12">
+            <Layers className="w-6 h-6 text-blue-500" />
           </div>
         </div>
-      </section>
+        <div className="absolute bottom-10 -left-6 sm:-left-16 z-20 animate-bounce" style={{ animationDuration: '3.8s' }}>
+          <div className="bg-white dark:bg-zinc-800 p-3 rounded-xl shadow-lg border border-zinc-100 dark:border-zinc-700 transform -rotate-6">
+            <Zap className="w-6 h-6 text-violet-500" />
+          </div>
+        </div>
 
-      {/* How it works */}
-      <section className="max-w-5xl mx-auto px-4 py-20">
-        <Reveal className="text-center mb-12">
-          <p className="text-xs font-semibold tracking-[0.22em] text-violet-600 uppercase mb-3">Workflow</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight mb-3">
-            How it <span className="font-display-serif italic font-normal">works</span>
-          </h2>
-          <p className="text-zinc-500">Three steps from blank page to published portfolio</p>
-        </Reveal>
-        <Reveal className="relative">
-          {/* Connector line draws itself across the steps on reveal */}
-          <div className="steps-line hidden md:block" aria-hidden="true" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {STEPS.map((item, i) => (
-              <Reveal key={item.step} delay={i * 140}>
-                <div className="relative">
-                  <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-zinc-200 to-zinc-50 mb-4 leading-none select-none" aria-hidden="true">{item.step}</div>
-                  <div className="relative z-10 h-10 w-10 bg-zinc-900 rounded-xl ring-4 ring-white flex items-center justify-center text-white mb-3">
-                    {item.icon}
-                  </div>
-                  <h3 className="font-semibold text-zinc-900 mb-2">{item.title}</h3>
-                  <p className="text-sm text-zinc-600 leading-relaxed">{item.desc}</p>
+        {/* Platform Mockup Window */}
+        <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-700/80 bg-white dark:bg-[#121212] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden relative flex flex-col h-[600px]">
+
+          {/* Mock App Header */}
+          <div className="h-14 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between px-4 bg-white dark:bg-[#121212] z-20 shrink-0">
+            <div className="flex items-center gap-2">
+              <Logo className="w-6 h-6" />
+              <span className="font-semibold text-sm">PortfolioForge</span>
+            </div>
+
+            <div className="hidden sm:flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-3 py-1.5 text-xs text-zinc-500 gap-2">
+              <Lock className="w-3 h-3" />
+              <span>portfolioforge.dev/u/ipandeysumit</span>
+              <FileText className="w-3 h-3 ml-2" />
+              <ExternalLink className="w-3 h-3" />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Moon className="w-4 h-4 text-zinc-400" />
+              <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-full text-xs font-medium">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                Live
+              </div>
+              <ArrowRight className="w-4 h-4 text-zinc-400" />
+            </div>
+          </div>
+
+          {/* Mock App Body */}
+          <div className="flex flex-1 overflow-hidden bg-white dark:bg-[#121212] text-left">
+
+            {/* Left Nav */}
+            <div className="w-48 border-r border-zinc-100 dark:border-zinc-800 p-4 hidden md:flex flex-col gap-6 shrink-0 bg-white dark:bg-[#121212]">
+              <div>
+                <div className="text-[10px] font-bold text-zinc-400 tracking-wider mb-2 uppercase">Build</div>
+                <div className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 shadow-sm">
+                  <Layers className="w-4 h-4" /> Builder
                 </div>
-              </Reveal>
-            ))}
+                <div className="text-zinc-600 dark:text-zinc-400 px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md cursor-pointer transition-colors mt-1">
+                  <PenLine className="w-4 h-4" /> Edit Details
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-zinc-400 tracking-wider mb-2 uppercase">Customize</div>
+                <div className="text-zinc-600 dark:text-zinc-400 px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md cursor-pointer transition-colors">
+                  <Palette className="w-4 h-4" /> Theme
+                </div>
+                <div className="text-zinc-600 dark:text-zinc-400 px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md cursor-pointer transition-colors mt-1">
+                  <LayoutTemplate className="w-4 h-4" /> Pattern
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-zinc-400 tracking-wider mb-2 uppercase">Account</div>
+                <div className="text-zinc-600 dark:text-zinc-400 px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md cursor-pointer transition-colors">
+                  <BarChart className="w-4 h-4" /> Analytics
+                </div>
+                <div className="text-zinc-600 dark:text-zinc-400 px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md cursor-pointer transition-colors mt-1">
+                  <Settings className="w-4 h-4" /> Settings
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Column */}
+            <div className="w-64 border-r border-zinc-100 dark:border-zinc-800 p-4 hidden lg:flex flex-col bg-zinc-50/50 dark:bg-zinc-900/20 shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-sm">My Components</h3>
+                  <p className="text-xs text-zinc-500">0 sections</p>
+                </div>
+                <div className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-medium px-2 py-1 rounded flex items-center gap-1 cursor-pointer">
+                  <Plus className="w-3 h-3" /> Add
+                </div>
+              </div>
+
+              <div className="border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-white dark:bg-[#121212]">
+                <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3 text-zinc-400">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <h4 className="text-sm font-semibold mb-1 text-zinc-700 dark:text-zinc-200">Add your first section</h4>
+                <p className="text-xs text-zinc-400">Browse the component library</p>
+              </div>
+            </div>
+
+            {/* Main Preview */}
+            <div className="flex-1 bg-zinc-50 dark:bg-zinc-900/50 p-6 flex flex-col relative">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
+                  <RefreshCw className="w-3 h-3 animate-spin" /> Saving...
+                </div>
+                <div className="bg-violet-500 hover:bg-violet-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors">
+                  <Sparkles className="w-3 h-3" /> Surprise me
+                </div>
+              </div>
+
+              <div className="flex-1 border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-[#121212] flex flex-col items-center justify-center text-center p-8 shadow-sm relative overflow-hidden">
+                 <div className="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-500 mb-6 relative">
+                   <Sparkles className="w-8 h-8 relative z-10" />
+                   <div className="absolute inset-0 bg-violet-400 opacity-20 blur-xl rounded-full"></div>
+                 </div>
+                 <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Start building your portfolio</h2>
+                 <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mb-6">
+                   Add sections from the library — they&apos;ll preview here exactly as visitors will see them.
+                 </p>
+                 <div className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer shadow-sm">
+                   <Plus className="w-4 h-4" /> Browse Library
+                 </div>
+              </div>
+            </div>
+
           </div>
-        </Reveal>
+        </div>
+      </section>
+      </div>{/* end hero wave wrapper */}
+
+      {/* Trusted By Strip */}
+      <section className="mb-24 text-center px-4">
+        <p
+          className="pf-page-text text-sm font-medium mb-8 uppercase tracking-widest text-xs"
+          style={{ color: "var(--pf-page-muted)" }}
+        >
+          Trusted by 50% of the Forbes Cloud 100
+        </p>
+        <div
+          className="pf-page-text flex flex-wrap justify-center items-center gap-x-12 gap-y-8 grayscale opacity-80"
+          style={{ color: "var(--pf-page-muted)" }}
+        >
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tighter"><div className="w-5 h-5 bg-current rounded-sm"></div> Vercel</div>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tighter"><div className="w-5 h-5 rounded-full border-4 border-current"></div> OpenAI</div>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tighter italic">Next.js</div>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">tailwindcss</div>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tighter font-serif">Figma</div>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tighter uppercase">Stripe</div>
+        </div>
       </section>
 
-      {/* CTA */}
-      <section className="relative overflow-hidden bg-zinc-900 py-24">
-        <Parallax speed={0.08} className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="cta-aurora" />
-        </Parallax>
-        <Reveal className="relative max-w-2xl mx-auto px-4 text-center">
-          <p className="text-xs font-semibold tracking-[0.22em] text-violet-400 uppercase mb-4">Get started</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
-            Start building for <span className="font-display-serif italic font-normal text-gradient-animated">free</span>
-          </h2>
-          <p className="text-zinc-400 mb-8">No sign-up required. Pick components, preview with your data, publish when ready.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Magnetic>
-              <Link href="/components"
-                className="btn-shine inline-flex items-center gap-2 bg-white text-zinc-900 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-zinc-100 transition-colors">
-                Browse Components
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </Magnetic>
-            <Link href="/patterns" className="text-sm text-zinc-400 hover:text-white underline-offset-4 hover:underline transition-colors">
-              or explore patterns →
-            </Link>
+      {/* Library Showcase Section */}
+      <section className="pf-section border-y border-zinc-200 dark:border-zinc-800 py-24">
+        <div className="max-w-6xl mx-auto px-4">
+          <LibraryShowcase />
+        </div>
+      </section>
+
+      {/* Portfolio Showcase — Fan Card Carousel */}
+      <section className="pf-section border-b border-zinc-200 dark:border-zinc-800 py-24 backdrop-blur-sm">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold tracking-[0.22em] text-violet-500 uppercase mb-3">Live portfolios</p>
+            <h2
+              className="pf-page-text text-3xl sm:text-4xl font-bold tracking-tight mb-3"
+              style={{ color: "var(--pf-page-fg)" }}
+            >
+              Built by developers like you
+            </h2>
+            <p
+              className="pf-page-text text-base max-w-md mx-auto"
+              style={{ color: "var(--pf-page-muted)" }}
+            >
+              Browse real portfolios shipping on PortfolioForge — click a card to explore.
+            </p>
           </div>
-        </Reveal>
+          <FanCardCarousel />
+        </div>
       </section>
 
       {/* Footer */}
-      <footer>
-        <div className="h-px bg-gradient-to-r from-transparent via-violet-200 to-transparent" aria-hidden="true" />
-        <div className="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Logo className="h-6 w-6" />
-            <span className="text-sm font-semibold text-zinc-900">PortfolioForge</span>
-          </div>
-          <nav aria-label="Footer" className="flex items-center gap-4 text-sm text-zinc-500">
-            <Link href="/components" className="hover:text-zinc-700">Components</Link>
-            <Link href="/patterns" className="hover:text-zinc-700">Patterns</Link>
-            <Link href="/docs" className="hover:text-zinc-700">Docs</Link>
-            <Link href="/preview" className="hover:text-zinc-700">Preview</Link>
-          </nav>
-          <p className="text-xs text-zinc-500">© {new Date().getFullYear()} PortfolioForge</p>
-        </div>
-      </footer>
+      <MainFooter />
     </div>
   );
 }
