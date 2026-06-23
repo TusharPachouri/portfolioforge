@@ -5,6 +5,10 @@ import { portfolios, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import DashboardShell from "./DashboardShell";
 
+// Always render fresh — prevents Next.js from caching a session-less response
+// that causes the first client-side navigation to land on sign-in.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin?callbackUrl=/dashboard");

@@ -506,7 +506,9 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<RawUserDetails>(() => {
-    const loaded = initialData ?? readLocalForm();
+    // When not authenticated, never read from localStorage — it may contain
+    // a previous authenticated user's personal data (name, email, etc.).
+    const loaded = isAuthed ? (initialData ?? readLocalForm()) : null;
     if (!loaded) return emptyForm();
     return {
       ...emptyForm(),
@@ -521,10 +523,13 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
   const set = useCallback((partial: Partial<RawUserDetails>) => {
     setForm((prev) => {
       const next = { ...prev, ...partial };
-      saveRawForm(next);
+      // Only persist to localStorage for guest (unauthenticated) users.
+      // Authenticated users save to the DB on submit; writing to localStorage
+      // would leak their real data to future unauthenticated page visits.
+      if (!isAuthed) saveRawForm(next);
       return next;
     });
-  }, [saveRawForm]);
+  }, [isAuthed, saveRawForm]);
 
   const fillFromResume = (d: RawUserDetails) => {
     const normalized: RawUserDetails = {
@@ -533,7 +538,7 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
       projects: (d.projects ?? []).map((p) => ({ ...p, imageUrl: p.imageUrl ?? "" })),
     };
     setForm(normalized);
-    saveRawForm(normalized);
+    if (!isAuthed) saveRawForm(normalized);
     setStep(1);
     showToast("Résumé imported ✓ — review your details");
   };
@@ -589,11 +594,15 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-sm min-w-0 flex-1 justify-center">
-            <Link href="/dashboard" className="hidden sm:flex items-center gap-1 text-zinc-400 hover:text-zinc-700 font-medium transition-colors shrink-0">
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              Dashboard
-            </Link>
-            <ChevronRight className="hidden sm:block h-3.5 w-3.5 text-zinc-300 shrink-0" />
+            {isAuthed && (
+              <>
+                <Link href="/dashboard" className="hidden sm:flex items-center gap-1 text-zinc-400 hover:text-zinc-700 font-medium transition-colors shrink-0">
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  Dashboard
+                </Link>
+                <ChevronRight className="hidden sm:block h-3.5 w-3.5 text-zinc-300 shrink-0" />
+              </>
+            )}
             <span className="text-zinc-400 font-medium shrink-0">Personalize</span>
             <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
             <span className="font-semibold text-zinc-800 truncate">{currentStep.label}</span>
@@ -601,12 +610,22 @@ export default function PersonalizeClient({ isAuthed, initialData }: Props) {
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600 transition-colors bg-white cursor-pointer"
-              onClick={() => {/* noop */}}
-            >
-              Save draft
-            </button>
+            {!isAuthed && (
+              <Link
+                href="/auth/signin"
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600 transition-colors bg-white"
+              >
+                Sign in
+              </Link>
+            )}
+            {isAuthed && (
+              <button
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600 transition-colors bg-white cursor-pointer"
+                onClick={() => {/* noop */}}
+              >
+                Save draft
+              </button>
+            )}
             <button
               className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-sm shadow-violet-500/20 cursor-pointer"
               onClick={step === LAST_STEP ? generate : next}

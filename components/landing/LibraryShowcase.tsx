@@ -58,10 +58,14 @@ interface VantaModalState {
   code: string;
 }
 
+const PAGE_INIT = 9;
+const PAGE_STEP = 3;
+
 export default function LibraryShowcase() {
   const [libraryView, setLibraryView] = useState<"components" | "patterns">("patterns");
   const [componentTab, setComponentTab] = useState<ComponentTab>("All Components");
   const [patternTab, setPatternTab] = useState<PatternTab>("all");
+  const [visibleCount, setVisibleCount] = useState(PAGE_INIT);
   const [activePattern, setActivePattern] = useState<ActivePattern | null>(null);
   const [activeVantaId, setActiveVantaId] = useState<string | null>(null);
   const [codeModal, setCodeModal] = useState<CodeModalState | null>(null);
@@ -154,13 +158,14 @@ export default function LibraryShowcase() {
     return true;
   });
 
-  const filteredPatterns = (
-    patternTab === "all" ? patterns : patterns.filter((p) => p.category === patternTab)
-  ).slice(0, 8);
+  const allVanta = (patternTab === "all" || patternTab === "effects") ? vantaPatterns : [];
+  const allCss   = patternTab === "all" ? patterns : patterns.filter((p) => p.category === patternTab);
 
-  const filteredVanta = (patternTab === "all" || patternTab === "effects") ? vantaPatterns : [];
-
-  const totalShown = filteredPatterns.length + filteredVanta.length;
+  // Combined list: WebGL first, CSS after
+  const combined = [...allVanta, ...allCss];
+  const visible  = combined.slice(0, visibleCount);
+  const hasMore  = visibleCount < combined.length;
+  const remaining = combined.length - visibleCount;
 
   // Portal target — #pf-above-fold covers Navbar + hero + trusted-by
   const [aboveFoldEl, setAboveFoldEl] = useState<HTMLElement | null>(null);
@@ -311,7 +316,7 @@ export default function LibraryShowcase() {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setPatternTab(tab.id)}
+                  onClick={() => { setPatternTab(tab.id); setVisibleCount(PAGE_INIT); }}
                   aria-pressed={patternTab === tab.id}
                   className={`px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all duration-300 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 ${
                     patternTab === tab.id ? tx.tabOn : tx.tabOff
@@ -323,12 +328,23 @@ export default function LibraryShowcase() {
             </div>
 
             <p className={`text-xs text-center mb-6 transition-colors duration-500 ${tx.count}`}>
-              Showing {totalShown} pattern{totalShown !== 1 ? "s" : ""}
+              Showing {visible.length} of {combined.length} pattern{combined.length !== 1 ? "s" : ""}
               {patternTab !== "all" ? ` in ${PATTERN_TABS.find((t) => t.id === patternTab)?.label}` : ""}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredPatterns.map((pattern) => {
+              {visible.map((pattern) => {
+                if ("vantaEffect" in pattern) {
+                  return (
+                    <VantaPatternCard
+                      key={pattern.id}
+                      pattern={pattern}
+                      isActive={activeVantaId === pattern.id}
+                      onApply={() => applyVanta(pattern.id)}
+                      onShowCode={(code, name) => setVantaModal({ id: pattern.id, name, code })}
+                    />
+                  );
+                }
                 const preview = pattern.render(pattern.defaults);
                 return (
                   <PatternCard
@@ -348,26 +364,20 @@ export default function LibraryShowcase() {
                   />
                 );
               })}
-
-              {filteredVanta.map((pattern) => (
-                <VantaPatternCard
-                  key={pattern.id}
-                  pattern={pattern}
-                  isActive={activeVantaId === pattern.id}
-                  onApply={() => applyVanta(pattern.id)}
-                  onShowCode={(code, name) => setVantaModal({ id: pattern.id, name, code })}
-                />
-              ))}
             </div>
 
-            <div className="text-center mt-8">
-              <Link
-                href="/patterns"
-                className={`inline-flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-xl border transition-all duration-300 ${tx.browseLink}`}
-              >
-                Browse all {patterns.length + vantaPatterns.length} patterns <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
+            {hasMore && (
+              <div className="flex justify-center mt-8">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((n) => n + PAGE_STEP)}
+                  className={`inline-flex items-center gap-2 text-sm font-semibold px-6 py-2.5 rounded-xl border transition-all duration-300 cursor-pointer ${tx.browseLink}`}
+                >
+                  Load {Math.min(PAGE_STEP, remaining)} more
+                  <span className={`text-xs font-normal ${tx.count}`}>({remaining} left)</span>
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

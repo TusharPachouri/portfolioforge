@@ -53,7 +53,7 @@ export default function MainFooter() {
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-0">
 
         {/* ── Main grid ─────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1.6fr] gap-x-10 gap-y-12 pb-14 border-b border-white/[0.06]">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1.6fr] gap-x-10 gap-y-12 pb-14 border-b border-white/[0.07]">
 
           {/* Brand */}
           <div className="flex flex-col gap-5">
@@ -149,12 +149,15 @@ export default function MainFooter() {
       {/* ── Ghost watermark ───────────────────────────────── */}
       <div
         aria-hidden="true"
-        className="select-none pointer-events-none w-full overflow-hidden flex justify-center"
-        style={{ marginTop: "-0.5rem" }}
+        className="select-none pointer-events-none w-full flex justify-center"
+        style={{ marginTop: "-1rem" }}
       >
         <span
-          className="text-[12vw] font-black leading-[0.85] tracking-[-0.04em] whitespace-nowrap"
-          style={{ WebkitTextStroke: "1px rgba(139,92,246,0.08)", color: "transparent" }}
+          className="text-[11.5vw] font-black leading-[0.82] tracking-[-0.03em] whitespace-nowrap"
+          style={{
+            WebkitTextStroke: "1.5px rgba(255,255,255,0.09)",
+            color: "transparent",
+          }}
         >
           PORTFOLIOFORGE
         </span>

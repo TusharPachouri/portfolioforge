@@ -11,24 +11,34 @@ import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { highlight } from "sugar-high";
 
-// VS Code Dark+ token colors applied as inline styles — never blocked by
-// Tailwind cascade or CSS loading order issues.
-const SH_STYLES: Record<string, string> = {
-  "sh-keyword":     "color:#569cd6",
-  "sh-string":      "color:#ce9178",
-  "sh-comment":     "color:#6a9955;font-style:italic",
-  "sh-jsxliterals": "color:#4ec9b0",
-  "sh-property":    "color:#9cdcfe",
-  "sh-entity":      "color:#dcdcaa",
-  "sh-class":       "color:#4ec9b0",
-  "sh-identifier":  "color:#d4d4d4",
-  "sh-sign":        "color:#d4d4d4",
+// sugar-high (this version) outputs style="color:var(--sh-keyword)" etc.
+// We resolve those CSS vars to real hex values so no stylesheet is needed.
+const SH_VAR_COLORS: Record<string, string> = {
+  "sh-keyword":     "#569cd6",
+  "sh-string":      "#ce9178",
+  "sh-comment":     "#6a9955",
+  "sh-jsxliterals": "#4ec9b0",
+  "sh-property":    "#9cdcfe",
+  "sh-entity":      "#dcdcaa",
+  "sh-class":       "#4ec9b0",
+  "sh-identifier":  "#d4d4d4",
+  "sh-sign":        "#d4d4d4",
+  "sh-space":       "#d4d4d4",
 };
 
-function applyInlineStyles(html: string): string {
-  return html.replace(
-    /class="(sh-[^"]+)"/g,
-    (_, cls) => `style="${SH_STYLES[cls] ?? "color:#d4d4d4"}"`,
+// Replace var(--sh-*) with real hex colors and split into per-line HTML.
+// sugar-high wraps each line in <span class="sh__line">…</span> separated by \n.
+// We split on \n then slice off the known prefix/suffix — no nested-span regex issues.
+function highlightLines(code: string): string[] {
+  const raw = highlight(code)
+    .replace(/var\(--(sh-[\w]+)\)/g, (_, name) => SH_VAR_COLORS[name] ?? "#d4d4d4")
+    .replace(/style="color:#6a9955"/g, 'style="color:#6a9955;font-style:italic"');
+
+  const PREFIX = '<span class="sh__line">';
+  const SUFFIX = "</span>";
+
+  return raw.split("\n").map(line =>
+    line.startsWith(PREFIX) ? line.slice(PREFIX.length, line.length - SUFFIX.length) : line
   );
 }
 
@@ -52,12 +62,7 @@ function CodeBlock({ code, fileName }: { code: string; fileName: string }) {
     } catch { /* clipboard unavailable */ }
   };
 
-  // Highlight then swap class="sh-*" for inline styles — works independently
-  // of CSS file loading order in Tailwind v4.
-  const highlightedLines = useMemo(
-    () => applyInlineStyles(highlight(code)).split("\n"),
-    [code],
-  );
+  const highlightedLines = useMemo(() => highlightLines(code), [code]);
 
   return (
     <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-[#1e1e1e] shadow-2xl shadow-black/40">

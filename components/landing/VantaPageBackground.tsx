@@ -19,21 +19,14 @@ export default function VantaPageBackground({
 
   useEffect(() => {
     if (!pattern) return;
-    const config = pattern.vantaConfig;
     let cancelled = false;
 
     async function boot() {
       if (!containerRef.current) return;
-      const THREE = await import("three");
-      const VANTA = (await import("vanta/dist/vanta.birds.min" as string)) as {
-        default: (opts: object) => { destroy: () => void };
-      };
-      if (cancelled || !containerRef.current) return;
-      effectRef.current = VANTA.default({
-        el: containerRef.current,
-        THREE,
-        ...config,
-      });
+      const { mountVanta } = await import("@/lib/patterns/vantaLoader");
+      const fx = await mountVanta(containerRef.current, pattern.vantaEffect, pattern.vantaConfig);
+      if (cancelled) { fx?.destroy(); return; }
+      effectRef.current = fx;
     }
 
     boot();
