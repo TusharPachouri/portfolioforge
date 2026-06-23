@@ -24,6 +24,8 @@ import HeroSpotlight from "@/components/sections/HeroSpotlight";
 import ProjectsTilt from "@/components/sections/ProjectsTilt";
 import SkillsMarquee from "@/components/sections/SkillsMarquee";
 import ExperienceReveal from "@/components/sections/ExperienceReveal";
+import PremiumNightTemplate from "@/components/templates/PremiumNightTemplate";
+import FloatingNavbar from "@/components/portfolio/FloatingNavbar";
 
 type SectionComponent = React.ComponentType<{ data: PortfolioData }>;
 
@@ -56,4 +58,8 @@ export const componentMap: Record<string, SectionComponent> = {
   "projects-tilt": ProjectsTilt,
   "skills-marquee": SkillsMarquee,
   "experience-reveal": ExperienceReveal,
+  // Navigation
+  "navbar-floating": FloatingNavbar,
+  // Full-page custom templates (not in component library)
+  "template-premium-night": PremiumNightTemplate,
 };

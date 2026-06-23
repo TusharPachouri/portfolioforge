@@ -16,6 +16,7 @@ import { getPatternById } from "@/lib/patterns/registry";
 import { getVantaPatternById } from "@/lib/patterns/vantaRegistry";
 import { validatePatternConfig, PatternConfig } from "@/lib/patterns/types";
 import { sendPortfolioLiveEmail } from "@/lib/email";
+import { templates } from "@/lib/templates";
 
 async function requireAuth() {
   const session = await auth();
@@ -370,4 +371,25 @@ export async function deleteImage(publicId: string): Promise<{ ok: boolean }> {
   await db.delete(userImages)
     .where(and(eq(userImages.publicId, publicId), eq(userImages.userId, user.id)));
   return { ok: true };
+}
+
+
+// ─── Templates ────────────────────────────────────────────────────────────────
+
+export async function applyTemplate(templateId: string) {
+  const user = await requireAuth();
+  const template = templates.find((t) => t.id === templateId);
+  if (!template) throw new Error("Template not found");
+  const portfolio = await getUserPortfolio(user.id);
+  await db.update(portfolios)
+    .set({
+      selectedComponentIds: template.componentIds,
+      themeId: template.themeId,
+      patternId: template.patternId ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(portfolios.id, portfolio.id));
+  revalidatePath(`/u/${portfolio.slug}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/theme");
 }

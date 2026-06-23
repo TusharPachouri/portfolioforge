@@ -8,7 +8,7 @@ import { Portfolio } from "@/lib/db/schema";
 import { signOut } from "next-auth/react";
 import {
   Layers, Settings, ExternalLink, Globe, LogOut, Sparkles, Palette,
-  LayoutGrid, Zap, BarChart2, Moon, Sun, Copy, Check, Menu, X
+  LayoutGrid, Zap, BarChart2, Moon, Sun, Copy, Check, Menu, X, LayoutTemplate
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useTransition } from "react";
@@ -25,8 +25,9 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: t
   {
     label: "Build",
     items: [
-      { href: "/dashboard",         label: "Builder",      icon: Layers   },
-      { href: "/dashboard/details", label: "Edit Details", icon: Sparkles },
+      { href: "/dashboard",           label: "Builder",    icon: Layers         },
+      { href: "/dashboard/templates", label: "Templates",  icon: LayoutTemplate },
+      { href: "/dashboard/details",   label: "Edit Details", icon: Sparkles     },
     ],
   },
   {

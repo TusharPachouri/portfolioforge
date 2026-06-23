@@ -8,6 +8,7 @@ import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useSession } from "next-auth/react";
 import { Layers, Sparkles, RotateCcw, LayoutDashboard, Menu, X, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useHeroDark } from "@/hooks/useHeroDark";
 
 export default function Navbar({ avatarUrl }: { avatarUrl?: string | null }) {
   const { state } = useBuilderState();
@@ -18,6 +19,7 @@ export default function Navbar({ avatarUrl }: { avatarUrl?: string | null }) {
   // Use DB avatar (prop) when available; fall back to session image for unauthenticated/initial render
   const displayAvatar = avatarUrl ?? session?.user?.image ?? null;
   const [open, setOpen] = useState(false);
+  const darkHero = useHeroDark();
 
   // Close the mobile menu on Escape
   useEffect(() => {
@@ -41,42 +43,54 @@ export default function Navbar({ avatarUrl }: { avatarUrl?: string | null }) {
 
   return (
     <>
-      <header className="sticky top-0 md:top-6 md:mt-6 z-[100] w-full md:w-max mx-auto bg-white/80 md:bg-white/70 backdrop-blur-md border-b border-zinc-100 md:border md:border-zinc-200/60 md:rounded-full md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300">
+      <header className={`sticky top-0 md:top-6 md:mt-6 z-[100] w-full md:w-max mx-auto backdrop-blur-md border-b md:border md:rounded-full transition-all duration-500 ${
+        darkHero
+          ? "bg-white/5 border-white/10 md:shadow-[0_8px_30px_rgb(0,0,0,0.25)]"
+          : "bg-white/80 md:bg-white/70 border-zinc-100 md:border-zinc-200/60 md:shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+      }`}>
         <div className="mx-auto px-4 md:px-2 md:pr-2 h-14 md:h-[56px] flex items-center justify-between gap-2 sm:gap-3 md:gap-2">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-900 text-sm shrink-0 md:px-3 md:py-2 md:hover:bg-zinc-100/80 md:rounded-full transition-colors" onClick={close}>
+          <Link href="/" className={`flex items-center gap-2 font-semibold text-sm shrink-0 md:px-3 md:py-2 md:rounded-full transition-colors ${
+            darkHero ? "text-white md:hover:bg-white/10" : "text-zinc-900 md:hover:bg-zinc-100/80"
+          }`} onClick={close}>
             <Logo className="h-7 w-7" />
             <span className="hidden sm:inline">PortfolioForge</span>
           </Link>
 
-          <div className="hidden md:block h-6 w-px opacity-15 bg-zinc-900 mx-1" />
+          <div className={`hidden md:block h-6 w-px mx-1 ${darkHero ? "bg-white/20" : "bg-zinc-900 opacity-15"}`} />
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link href="/components" className="px-3 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 rounded-full transition-colors">
-              Components
-            </Link>
-            <Link href="/patterns" className="px-3 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 rounded-full transition-colors">
-              Patterns
-            </Link>
-            <Link href="/docs" className="px-3 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 rounded-full transition-colors">
-              Docs
-            </Link>
+            {(["Components", "Patterns", "Docs"] as const).map((label) => (
+              <Link key={label} href={`/${label.toLowerCase()}`}
+                className={`px-3 py-2 text-sm font-medium rounded-full transition-colors ${
+                  darkHero
+                    ? "text-white/70 hover:text-white hover:bg-white/10"
+                    : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80"
+                }`}>
+                {label}
+              </Link>
+            ))}
           </nav>
 
-          <div className="hidden md:block h-6 w-px opacity-15 bg-zinc-900 mx-1" />
+          <div className={`hidden md:block h-6 w-px mx-1 ${darkHero ? "bg-white/20" : "bg-zinc-900 opacity-15"}`} />
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             {isCustom && (
               <button onClick={resetToDemo}
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-800 px-3 py-2 rounded-full hover:bg-zinc-100/80 transition-colors cursor-pointer">
+                className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-full transition-colors cursor-pointer ${
+                  darkHero ? "text-white/60 hover:text-white hover:bg-white/10" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/80"
+                }`}>
                 <RotateCcw className="h-3.5 w-3.5" /> Reset
               </button>
             )}
 
-            {/* Hide Personalize in top bar on mobile so it only appears in the menu */}
             <Link href="/personalize"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium bg-white/50 border border-zinc-200/80 text-zinc-700 px-4 py-2 rounded-full hover:bg-white transition-colors shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+              className={`hidden sm:inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full transition-colors shadow-sm ${
+                darkHero
+                  ? "bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                  : "bg-white/50 border border-zinc-200/80 text-zinc-700 hover:bg-white"
+              }`}>
+              <Sparkles className={`h-3.5 w-3.5 ${darkHero ? "text-violet-300" : "text-violet-500"}`} />
               {isCustom ? "Edit details" : "Personalize"}
             </Link>
 
@@ -91,10 +105,13 @@ export default function Navbar({ avatarUrl }: { avatarUrl?: string | null }) {
               </Link>
             )}
 
-            {/* Auth-aware right side (visible on mobile too) */}
             {isSignedIn ? (
               <Link href="/dashboard"
-                className="inline-flex items-center gap-2 text-sm font-medium bg-white/50 border border-zinc-200/80 text-zinc-700 px-4 py-2 rounded-full hover:bg-white transition-colors shadow-sm">
+                className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full transition-colors shadow-sm ${
+                  darkHero
+                    ? "bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                    : "bg-white/50 border border-zinc-200/80 text-zinc-700 hover:bg-white"
+                }`}>
                 {displayAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={displayAvatar} alt="" className="h-5 w-5 rounded-full border border-zinc-200 object-cover" />
@@ -105,17 +122,22 @@ export default function Navbar({ avatarUrl }: { avatarUrl?: string | null }) {
               </Link>
             ) : (
               <Link href="/auth/signin"
-                className="inline-flex items-center gap-1.5 text-sm font-medium bg-zinc-900 text-white px-5 py-2 rounded-full hover:bg-zinc-800 transition-colors shadow-sm">
+                className={`inline-flex items-center gap-1.5 text-sm font-medium px-5 py-2 rounded-full transition-colors shadow-sm ${
+                  darkHero
+                    ? "bg-white text-zinc-900 hover:bg-zinc-100"
+                    : "bg-zinc-900 text-white hover:bg-zinc-800"
+                }`}>
                 Sign in
               </Link>
             )}
 
-            {/* Mobile hamburger - prominent on mobile */}
             <button
               onClick={() => setOpen((o) => !o)}
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
-              className="md:hidden flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 transition-colors cursor-pointer shrink-0"
+              className={`md:hidden flex h-9 w-9 items-center justify-center rounded-full transition-colors cursor-pointer shrink-0 ${
+                darkHero ? "bg-white/15 text-white hover:bg-white/25" : "bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+              }`}
             >
               <AnimatePresence mode="wait">
                 {open ? (

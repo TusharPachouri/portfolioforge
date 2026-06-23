@@ -11,7 +11,6 @@ import { getVantaPatternById } from "@/lib/patterns/vantaRegistry";
 import { PatternConfig } from "@/lib/patterns/types";
 import type { Metadata } from "next";
 import ViewRecorder from "./ViewRecorder";
-import FloatingNavbar from "@/components/portfolio/FloatingNavbar";
 import VantaPageBackground from "@/components/landing/VantaPageBackground";
 
 interface Props {
@@ -174,7 +173,6 @@ export default async function PublicPortfolioPage({ params }: Props) {
 
       {/* Content sits above the pattern overlay */}
       <div style={{ position: "relative", zIndex: 1 }}>
-        <FloatingNavbar data={data} />
         {ids.map((id) => {
           const baseId = id.includes(":") ? id.split(":")[0] : id;
           const Component = componentMap[baseId];

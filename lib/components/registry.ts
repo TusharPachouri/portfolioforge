@@ -1,6 +1,7 @@
 export type ComponentTier = "free" | "pro";
 export type ComponentCategory = "section" | "primitive";
 export type SectionSubcategory =
+  | "Navigation"
   | "Hero"
   | "About"
   | "Skills"
@@ -36,6 +37,19 @@ export interface ComponentEntry {
 }
 
 export const registry: ComponentEntry[] = [
+  // ── Navigation ───────────────────────────────────────────────────────────────
+  {
+    id: "navbar-floating",
+    name: "Floating Navbar",
+    category: "section",
+    subcategory: "Navigation",
+    description: "Fixed pill-shaped navbar with your name, social icons, and a Contact CTA. Adapts to any theme.",
+    tags: ["navbar", "navigation", "fixed", "floating", "pill", "social"],
+    tier: "free",
+    sortOrder: -20,
+    variants: 1,
+    isNew: true,
+  },
   // ── Advanced motion & physics (free) — surfaced first ───────────────────────
   {
     id: "hero-spotlight",

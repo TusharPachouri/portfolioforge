@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Sparkles, Layers, Zap } from "lucide-react";
 import MockupDemo from "@/components/landing/MockupDemo";
+import { useHeroDark } from "@/hooks/useHeroDark";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -22,6 +23,8 @@ const AVATARS = [
 ];
 
 export default function HeroContent() {
+  const darkHero = useHeroDark();
+
   return (
     <>
       {/* ── Hero text section ─────────────────────────────────────── */}
@@ -81,13 +84,21 @@ export default function HeroContent() {
         >
           <Link
             href="/components"
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-semibold transition-colors shadow-sm text-sm sm:text-base"
+            className={`w-full sm:w-auto px-6 py-3 rounded-md font-semibold transition-all duration-500 shadow-sm text-sm sm:text-base ${
+              darkHero
+                ? "bg-white text-zinc-900 hover:bg-zinc-100 shadow-lg"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
           >
             Get PortfolioForge free
           </Link>
           <Link
             href="/preview"
-            className="w-full sm:w-auto text-blue-600 dark:text-blue-400 hover:underline px-6 py-3 font-semibold transition-colors text-sm sm:text-base"
+            className={`w-full sm:w-auto px-6 py-3 font-semibold transition-all duration-500 text-sm sm:text-base ${
+              darkHero
+                ? "text-white/80 hover:text-white hover:underline"
+                : "text-blue-600 dark:text-blue-400 hover:underline"
+            }`}
           >
             Request a demo →
           </Link>

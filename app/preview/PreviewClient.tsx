@@ -5,7 +5,6 @@ import { usePortfolio } from "@/contexts/PortfolioContext";
 import { componentMap } from "@/lib/components/map";
 import { getComponentById } from "@/lib/components/registry";
 import Link from "next/link";
-import FloatingNavbar from "@/components/portfolio/FloatingNavbar";
 import { Layers, Pencil, LogIn, Trash2, Sparkles, CheckCircle2, LayoutDashboard } from "lucide-react";
 
 interface Props {
@@ -105,7 +104,6 @@ export default function PreviewClient({ isSignedIn }: Props) {
 
           {/* Render sections with live context data */}
           <div className="relative isolate pt-14 pf-themed" style={{ background: "var(--pf-bg)", color: "var(--pf-fg)" }}>
-            <FloatingNavbar data={portfolioData} className="absolute top-6" />
             {ids.map((id) => {
             const Component = componentMap[id];
             if (!Component) return null;
