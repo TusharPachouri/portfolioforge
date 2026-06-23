@@ -22,7 +22,7 @@ export default function VantaPageBackground({
     let cancelled = false;
 
     async function boot() {
-      if (!containerRef.current) return;
+      if (!containerRef.current || !pattern) return;
       const { mountVanta } = await import("@/lib/patterns/vantaLoader");
       const fx = await mountVanta(containerRef.current, pattern.vantaEffect, pattern.vantaConfig);
       if (cancelled) { fx?.destroy(); return; }
