@@ -3,6 +3,17 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* ── sugar-high syntax tokens — VS Code Dark+ palette ──────────────────── */
+.sh-keyword    { color: #569cd6 !important; }
+.sh-string     { color: #ce9178 !important; }
+.sh-comment    { color: #6a9955 !important; font-style: italic; }
+.sh-jsxliterals { color: #4ec9b0 !important; }
+.sh-property   { color: #9cdcfe !important; }
+.sh-entity     { color: #dcdcaa !important; }
+.sh-class      { color: #4ec9b0 !important; }
+.sh-identifier { color: #d4d4d4 !important; }
+.sh-sign       { color: #d4d4d4 !important; }
+
 :root {
   --background: #ffffff;
   --foreground: #0f0f0f;
@@ -63,17 +74,58 @@
 /* Smooth text-colour transitions when the landing-page pattern overlay changes */
 .pf-page-text { transition: color 0.45s ease; }
 
-/* When a pattern is active, make the page root transparent so the body background
-   (CSS gradient or Vanta canvas at z-[-1]) shows through all sections */
-html.pf-pattern-active .pf-page-root {
-  background: transparent !important;
+/* Hero zone clips the pattern — the rest of the page is untouched */
+#pf-hero-zone { transition: background 0.4s ease; }
+
+/* ── Dark-theme overrides (Vanta or dark gradient active) ────────────────── */
+
+/* Ensure #pf-above-fold itself is dark (covers any bg-white bleed in the
+   24px md:mt-6 gap above the Navbar before the canvas paints) */
+#pf-above-fold[data-dark-theme] {
+  background-color: #0a0a14 !important;
 }
 
-/* pf-section: frosted-glass panel that adapts to the active pattern brightness */
-.pf-section                                           { background: rgba(249,250,251,0.82); }
-.dark .pf-section                                     { background: rgba(24,24,27,0.60); }
-html.pf-pattern-active.pf-pattern-dark  .pf-section  { background: rgba(0,0,0,0.30) !important; }
-html.pf-pattern-active:not(.pf-pattern-dark) .pf-section { background: rgba(255,255,255,0.72) !important; }
+/* Navbar: dark glass background */
+#pf-above-fold[data-dark-theme] header {
+  background-color: rgba(8, 8, 18, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.30) !important;
+}
+
+/* Navbar: all text/icon elements → light */
+#pf-above-fold[data-dark-theme] header span,
+#pf-above-fold[data-dark-theme] header a,
+#pf-above-fold[data-dark-theme] header button,
+#pf-above-fold[data-dark-theme] header p,
+#pf-above-fold[data-dark-theme] header svg {
+  color: rgba(255, 255, 255, 0.80) !important;
+}
+#pf-above-fold[data-dark-theme] header a:hover,
+#pf-above-fold[data-dark-theme] header button:hover {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+/* Navbar: translucent-white buttons (Personalize, Dashboard) → dark glass */
+#pf-above-fold[data-dark-theme] header a[class*="bg-white"] {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Navbar: dark solid buttons (Sign In, Preview) → keep dark but slightly lighter */
+#pf-above-fold[data-dark-theme] header a[class*="bg-zinc-9"] {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Navbar: separator divs → white */
+#pf-above-fold[data-dark-theme] header div[class*="bg-zinc-9"] {
+  background-color: rgba(255, 255, 255, 0.20) !important;
+}
+
+/* Hero + Trusted By text tokens → light — reliable fallback over var() cascade */
+#pf-above-fold[data-dark-theme] .pf-page-text {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
 
 body {
   background: var(--background);

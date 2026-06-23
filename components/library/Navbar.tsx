@@ -9,12 +9,14 @@ import { useSession } from "next-auth/react";
 import { Layers, Sparkles, RotateCcw, LayoutDashboard, Menu, X, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
-export default function Navbar() {
+export default function Navbar({ avatarUrl }: { avatarUrl?: string | null }) {
   const { state } = useBuilderState();
   const { isCustom, resetToDemo } = usePortfolio();
   const { data: session, status } = useSession();
   const count = state.selectedComponentIds.length;
   const isSignedIn = status === "authenticated" && !!session?.user;
+  // Use DB avatar (prop) when available; fall back to session image for unauthenticated/initial render
+  const displayAvatar = avatarUrl ?? session?.user?.image ?? null;
   const [open, setOpen] = useState(false);
 
   // Close the mobile menu on Escape
@@ -93,9 +95,9 @@ export default function Navbar() {
             {isSignedIn ? (
               <Link href="/dashboard"
                 className="inline-flex items-center gap-2 text-sm font-medium bg-white/50 border border-zinc-200/80 text-zinc-700 px-4 py-2 rounded-full hover:bg-white transition-colors shadow-sm">
-                {session.user?.image ? (
+                {displayAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={session.user.image} alt="" className="h-5 w-5 rounded-full border border-zinc-200" />
+                  <img src={displayAvatar} alt="" className="h-5 w-5 rounded-full border border-zinc-200 object-cover" />
                 ) : (
                   <LayoutDashboard className="h-4 w-4" />
                 )}
@@ -211,11 +213,11 @@ export default function Navbar() {
                 )}
 
                 {isSignedIn ? (
-                  <Link href="/dashboard" onClick={close} 
+                  <Link href="/dashboard" onClick={close}
                     className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold text-zinc-900 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all">
-                    {session.user.image ? (
+                    {displayAvatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={session.user.image} alt="" className="h-5 w-5 rounded-full" />
+                      <img src={displayAvatar} alt="" className="h-5 w-5 rounded-full object-cover" />
                     ) : (
                       <LayoutDashboard className="h-4 w-4" />
                     )}

@@ -17,6 +17,7 @@ import { publishPortfolio } from "@/lib/actions/portfolio";
 interface Props {
   session: Session;
   portfolio: Portfolio | null;
+  avatarUrl: string | null;
   children: React.ReactNode;
 }
 
@@ -117,7 +118,7 @@ function SidebarNav({
   );
 }
 
-export default function DashboardShell({ session, portfolio, children }: Props) {
+export default function DashboardShell({ session, portfolio, avatarUrl, children }: Props) {
   const pathname = usePathname();
   const [published, setPublished] = useState(portfolio?.published ?? false);
   const [isPending, startTransition] = useTransition();
@@ -243,9 +244,9 @@ export default function DashboardShell({ session, portfolio, children }: Props) 
             </button>
 
             <div className="flex items-center gap-2">
-              {session.user.image && (
+              {avatarUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={session.user.image} alt="" className="h-7 w-7 rounded-full ring-2 ring-zinc-100 dark:ring-zinc-700" />
+                <img src={avatarUrl} alt="" className="h-7 w-7 rounded-full ring-2 ring-zinc-100 dark:ring-zinc-700 object-cover" />
               )}
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}

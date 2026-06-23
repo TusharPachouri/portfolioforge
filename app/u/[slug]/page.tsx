@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { portfolios, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
 import { componentMap } from "@/lib/components/map";
+import ProfileNotFound from "./ProfileNotFound";
 import { demoData } from "@/lib/demo-data";
 import { PortfolioData } from "@/types/portfolio";
 import { getThemeTokenStyle } from "@/lib/themes";
@@ -70,8 +70,8 @@ export default async function PublicPortfolioPage({ params }: Props) {
     where: eq(portfolios.slug, slug),
   });
 
-  // 404 for missing or unpublished (no enumeration)
-  if (!portfolio || !portfolio.published) notFound();
+  // Show a branded "not found" page instead of a bare 404
+  if (!portfolio || !portfolio.published) return <ProfileNotFound slug={slug} />;
 
   // Owners who haven't personalized yet publish exactly what the dashboard
   // preview showed them — the demo data. The dashboard nudges them to fill

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowRight, Palette, X, Zap } from "lucide-react";
 import { patterns } from "@/lib/patterns/registry";
@@ -70,84 +71,74 @@ export default function LibraryShowcase() {
     ? vantaPatterns.find((p) => p.id === activeVantaId)?.name ?? null
     : null;
 
-  // Derive text contrast from whichever pattern is active
+  // Text contrast for the above-fold zone only
   const activeTextContrast: "light" | "dark" | null = activePattern?.textContrast
     ?? (activeVantaId ? (vantaPatterns.find((p) => p.id === activeVantaId)?.textContrast ?? "light") : null);
 
-  // Text-theme tokens — applied throughout the pattern-library view
-  const isLight = activeTextContrast === "light";
+  // Library section is always light-background — hardcoded dark text regardless of theme
   const tx = {
-    heading:     isLight ? "text-white"           : "text-zinc-900",
-    body:        isLight ? "text-white/70"         : "text-zinc-500",
-    badge:       isLight ? "text-white/60"         : "text-violet-600",
-    toggleOn:    isLight ? "bg-white/20 text-white shadow-sm" : "bg-zinc-900 text-white shadow-sm",
-    toggleOff:   isLight ? "bg-white/10 text-white/60 hover:text-white/90 hover:bg-white/20" : "bg-zinc-100 text-zinc-600 hover:text-zinc-800 hover:bg-zinc-200",
-    tabBar:      isLight ? "bg-white/10" : "bg-zinc-100",
-    tabOn:       isLight ? "bg-white/25 text-white shadow-sm" : "bg-white text-zinc-900 shadow-sm",
-    tabOff:      isLight ? "text-white/60 hover:text-white/90" : "text-zinc-500 hover:text-zinc-700",
-    browseLink:  isLight ? "text-white/80 border-white/30 hover:text-white hover:bg-white/10" : "text-zinc-600 border-zinc-200 hover:text-zinc-900 hover:bg-zinc-50",
-    count:       isLight ? "text-white/50" : "text-zinc-500",
+    heading:    "text-zinc-900",
+    body:       "text-zinc-500",
+    badge:      "text-violet-600",
+    toggleOn:   "bg-zinc-900 text-white shadow-sm",
+    toggleOff:  "bg-zinc-100 text-zinc-600 hover:text-zinc-800 hover:bg-zinc-200",
+    tabBar:     "bg-zinc-100",
+    tabOn:      "bg-white text-zinc-900 shadow-sm",
+    tabOff:     "text-zinc-500 hover:text-zinc-700",
+    browseLink: "text-zinc-600 border-zinc-200 hover:text-zinc-900 hover:bg-zinc-50",
+    count:      "text-zinc-500",
   };
 
-  // Propagate text contrast + section-surface colour to the entire landing page
+  // Text tokens + Navbar theme — scoped to #pf-above-fold only
   useEffect(() => {
-    const root = document.documentElement;
+    const above = document.getElementById("pf-above-fold");
+    if (!above) return;
     if (activeTextContrast === "light") {
-      root.style.setProperty("--pf-page-fg",    "rgba(255,255,255,0.93)");
-      root.style.setProperty("--pf-page-muted", "rgba(255,255,255,0.60)");
-      root.classList.add("pf-pattern-dark");
+      above.style.setProperty("--pf-page-fg",    "rgba(255,255,255,0.93)");
+      above.style.setProperty("--pf-page-muted", "rgba(255,255,255,0.60)");
+      above.setAttribute("data-dark-theme", "");
     } else {
-      root.style.setProperty("--pf-page-fg",    "#18181b");
-      root.style.setProperty("--pf-page-muted", "#71717a");
-      root.classList.remove("pf-pattern-dark");
+      above.style.removeProperty("--pf-page-fg");
+      above.style.removeProperty("--pf-page-muted");
+      above.removeAttribute("data-dark-theme");
     }
     return () => {
-      root.style.removeProperty("--pf-page-fg");
-      root.style.removeProperty("--pf-page-muted");
-      root.classList.remove("pf-pattern-dark");
+      above.style.removeProperty("--pf-page-fg");
+      above.style.removeProperty("--pf-page-muted");
+      above.removeAttribute("data-dark-theme");
     };
   }, [activeTextContrast]);
 
-  // Apply the active pattern as a body background so ALL page sections are
-  // naturally above it — no z-index juggling on individual sections needed.
+  // CSS pattern background — scoped to #pf-above-fold only
   useEffect(() => {
-    const body = document.body;
-    const html = document.documentElement;
+    const above = document.getElementById("pf-above-fold");
+    if (!above) return;
     const applied: string[] = [];
 
     if (activePattern) {
-      // Write each CSS prop from the pattern render onto <body>
       (Object.entries(activePattern.style) as [string, unknown][]).forEach(([key, value]) => {
         if (!["opacity", "mixBlendMode"].includes(key) && value !== undefined && value !== "") {
-          (body.style as unknown as Record<string, string>)[key] = String(value);
+          (above.style as unknown as Record<string, string>)[key] = String(value);
           applied.push(key);
         }
       });
-      // Fix background to viewport so it doesn't scroll
-      body.style.backgroundAttachment = "fixed";
-      applied.push("backgroundAttachment");
-      html.classList.add("pf-pattern-active");
-    } else if (activeVantaId) {
-      // Vanta WebGL canvas sits at z-[-1]; make body transparent so it shows
-      body.style.background = "transparent";
-      applied.push("background");
-      html.classList.add("pf-pattern-active");
     }
 
     return () => {
-      applied.forEach((key) => { (body.style as unknown as Record<string, string>)[key] = ""; });
-      html.classList.remove("pf-pattern-active");
+      applied.forEach((key) => { (above.style as unknown as Record<string, string>)[key] = ""; });
     };
-  }, [activePattern, activeVantaId]);
+  }, [activePattern]);
 
   function applyVanta(id: string) {
     setActiveVantaId(id);
     setActivePattern(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function applyCss(pattern: ActivePattern) {
     setActivePattern(pattern);
     setActiveVantaId(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function clearActive() {
@@ -171,14 +162,21 @@ export default function LibraryShowcase() {
 
   const totalShown = filteredPatterns.length + filteredVanta.length;
 
+  // Portal target — #pf-above-fold covers Navbar + hero + trusted-by
+  const [aboveFoldEl, setAboveFoldEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setAboveFoldEl(document.getElementById("pf-above-fold"));
+  }, []);
+
   return (
-    <section className="max-w-5xl mx-auto px-4 py-20">
-      {/* ── Vanta WebGL canvas sits below all page content at z-[-1] ──────── */}
-      {activeVantaId && (
+    <section className="max-w-5xl mx-auto px-4 pt-10 pb-20">
+      {/* ── Vanta canvas portalled into #pf-above-fold — z-0 so content sits above it ── */}
+      {activeVantaId && aboveFoldEl && createPortal(
         <VantaPageBackground
           patternId={activeVantaId}
-          className="fixed inset-0 pointer-events-none z-[-1]"
-        />
+          className="absolute inset-0 pointer-events-none z-0"
+        />,
+        aboveFoldEl
       )}
 
       {/* ── Floating pill (z-50, above overlay and content) ─────────────── */}

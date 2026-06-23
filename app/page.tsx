@@ -6,14 +6,30 @@ import HeroWave from "@/components/landing/HeroWave";
 import Logo from "@/components/Logo";
 import { ArrowRight, Sparkles, Layers, Zap, Lock, FileText, Plus, Moon, ExternalLink, RefreshCw, BarChart, Settings, LayoutTemplate, Palette, PenLine } from "lucide-react";
 import MainFooter from "@/components/library/MainFooter";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth();
+  let avatarUrl: string | null = null;
+  if (session?.user?.id) {
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.id, session.user.id),
+      columns: { image: true },
+    });
+    avatarUrl = dbUser?.image ?? session.user.image ?? null;
+  }
+
   return (
     <div className="pf-page-root min-h-screen bg-white dark:bg-[#191919] text-zinc-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30">
-      <Navbar />
+      {/* ── Above fold: Navbar + hero + trusted-by — theme applies here only ── */}
+      <div id="pf-above-fold" className="relative bg-white dark:bg-[#191919] pt-px pb-24" style={{ transition: "background 0.5s ease" }}>
+      <Navbar avatarUrl={avatarUrl} />
 
       {/* ── Hero area — wave spans text + mockup ── */}
-      <div className="relative overflow-hidden">
+      <div id="pf-hero-zone" className="relative overflow-hidden">
       <HeroWave />
 
       {/* Hero Section */}
@@ -194,7 +210,7 @@ export default function HomePage() {
       </div>{/* end hero wave wrapper */}
 
       {/* Trusted By Strip */}
-      <section className="mb-24 text-center px-4">
+      <section className="text-center px-4 relative z-10">
         <p
           className="pf-page-text text-sm font-medium mb-8 uppercase tracking-widest text-xs"
           style={{ color: "var(--pf-page-muted)" }}
@@ -213,9 +229,10 @@ export default function HomePage() {
           <div className="flex items-center gap-2 font-bold text-xl tracking-tighter uppercase">Stripe</div>
         </div>
       </section>
+      </div>{/* end pf-above-fold */}
 
       {/* Library Showcase Section */}
-      <section className="pf-section border-y border-zinc-200 dark:border-zinc-800 py-24">
+      <section className="pf-section border-y border-zinc-200 dark:border-zinc-800 pb-24">
         <div className="max-w-6xl mx-auto px-4">
           <LibraryShowcase />
         </div>
@@ -223,7 +240,7 @@ export default function HomePage() {
 
       {/* Portfolio Showcase — Fan Card Carousel */}
       <section className="pf-section border-b border-zinc-200 dark:border-zinc-800 py-24 backdrop-blur-sm">
-        <div className="max-w-3xl mx-auto px-4">
+        <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-14">
             <p className="text-xs font-semibold tracking-[0.22em] text-violet-500 uppercase mb-3">The creator</p>
             <h2
